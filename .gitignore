@@ -1,0 +1,10 @@
+auto-save-list/
+elpa/
+emacs.desktop
+init.el~
+lock
+places
+projectile-bookmarks.eld
+recentf
+recentf~
+semanticdb/
