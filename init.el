@@ -311,6 +311,7 @@ function call."
                     "o" '(:ignore t :which-key "Fold")
                     "i" '(:ignore t :which-key "Fill")
                     "j" '(:ignore t :which-key "Jump")
+                    "e" '(eval-buffer :which-key "Eval Buffer")
                     "." '(xref-find-definitions :which-key "find definition")
                     "," '(xref-pop-marker-stack :which-key "pop back")
                     "jr" '(cider-switch-to-repl-buffer :which-key "goto REPL")
