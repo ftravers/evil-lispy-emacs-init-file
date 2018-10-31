@@ -57,7 +57,9 @@ prefix: SPC
 | o h  | hide-all |
 | o s  | show-all |
 
-** Lispy Mode
+* Lispy Mode
+
+** Getting in (and out) of lispy mode
 
 Lispy mode is how you'll want to edit clojure files.  It offers
 structural editing, which will make more sense in a minute.  To get
@@ -70,3 +72,8 @@ following keys:
 | ]      | move to after the closing paren  |
 
 you can also use the standard i, I, a, A, o, O Vi keys.
+
+You'll notice your cursor changes appearance when you are in lispy
+mode.  To get out of lispy mode just hit the ~ESC~ key.
+
+
