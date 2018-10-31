@@ -1,0 +1,7 @@
+* Intro
+
+How to use my funky cool sweet emacs init config!
+
+* Summary
+
+blah blah
