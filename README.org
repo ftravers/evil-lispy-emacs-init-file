@@ -66,14 +66,42 @@ structural editing, which will make more sense in a minute.  To get
 into lispy mode, while in a clojure(script) file, hit any of the
 following keys:
 
-| keys   | effect                           |
-|--------+----------------------------------|
-| [      | move to before the opening paren |
-| ]      | move to after the closing paren  |
+| keys | effect                          |
+|------+---------------------------------|
+| [    | move onto the opening paren     |
+| ]    | move to after the closing paren |
 
-you can also use the standard i, I, a, A, o, O Vi keys.
+When you are in either of these two special positions, on an opening
+paren, or after a closing paren, you are in the special Lispy Mode.
+When in this mode, just like Vi normal mode, keys have different
+effect other than just self inserting themselves.  Try hitting the ~x~
+key on an opening paren to see what it does.
+
+So I dont replicate an already good reference for lispy, go look at
+the original website:
+
+https://github.com/abo-abo/lispy
+
+you can also get into lipsy mode using the standard i, I, a, A, o, O,
+Vi keys. 
 
 You'll notice your cursor changes appearance when you are in lispy
 mode.  To get out of lispy mode just hit the ~ESC~ key.
 
+* Magit
+
+Magit is the git integration in emacs.  To get into it do: ~SPC g s~.
+To get out type ~q~.
+
+This will show the magit status window.  Here you can navigate up and
+down with j/k.  Below is a summary of common actions:
+
+
+| keys    | effect                                       |
+|---------+----------------------------------------------|
+| TAB     | when on a modified file, hide/show changes   |
+| S       | stage all unstaged changes                   |
+| c c     | commit staged changes                        |
+| C-c C-c | commit change after writing a commit message |
+| P u     | push changes to remote                       |
 

@@ -352,6 +352,14 @@ function call."
                     :states '(normal visual emacs)
                     "q" '(cider-popup-buffer-quit-function :which-key "quit"))  
 
+(general-define-key :keymaps '(magit-status-mode-map help-mode-map) :prefix "SPC"
+                    :states '(normal visual emacs)
+                    "1" '(winum-select-window-1 :which-key "move window 1")
+                    "2" '(winum-select-window-2 :which-key "move window 2")
+                    "3" '(winum-select-window-3 :which-key "move window 3")
+                    "4" '(winum-select-window-4 :which-key "move window 4")
+                    "5" '(winum-select-window-5 :which-key "move window 5"))
+
 (general-define-key :keymaps 'cider-repl-mode-map 
                     :states '(normal visual emacs)
                     "C-j" '(cider-repl-forward-input :which-key "Next Command")
