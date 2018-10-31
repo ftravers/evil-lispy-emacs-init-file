@@ -17,3 +17,22 @@ Once you have the cloned the repo, make a sym link to it:
 : ln -s evil-lispy-emacs-init-file.git .emacs.d
 
 ensure you have renamed your existing ~.emacs.d~ file.
+
+* Features
+
+Whenever you want to run a command, type ~SPC~ (spacebar) when you are
+in Normal mode.  This will bring up a list of keys you can type to run
+commands. 
+
+** Code folding
+
+Code folding is collapsing or expanding your functions so you can
+focus on what you are working on without the rest of the file
+polluting your screen.
+
+prefix: SPC
+
+| keys | effect   |
+|------+----------|
+| o h  | hide-all |
+| o s  | show-all |
