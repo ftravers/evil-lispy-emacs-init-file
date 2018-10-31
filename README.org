@@ -1,7 +1,19 @@
-* Intro
+* Overview
 
-How to use my funky cool sweet emacs init config!
+This emacs config is optimized for clojure(script) editing.  It is
+also based on the idea of Spacemacs in that we have a leader key
+'SPC', that prefixes our commands.
 
-* Summary
+It also uses ~evil-mode~, so if Vi is your preference, then you'll be
+happy. 
 
-blah blah
+Finally it uses ~lispy~ which is structural editing for lispy like
+files, i.e. clojure(script).  Think paredit, but not key-chords.
+
+* Install
+
+Once you have the cloned the repo, make a sym link to it:
+
+: ln -s evil-lispy-emacs-init-file.git .emacs.d
+
+ensure you have renamed your existing ~.emacs.d~ file.
