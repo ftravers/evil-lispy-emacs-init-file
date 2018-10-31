@@ -24,6 +24,26 @@ Whenever you want to run a command, type ~SPC~ (spacebar) when you are
 in Normal mode.  This will bring up a list of keys you can type to run
 commands. 
 
+** File navigation
+
+When you want to open/find up a file: 
+
+prefix: SPC
+
+| keys | effect         |
+|------+----------------|
+| f f  | find/open file |
+
+** Buffer navigation
+
+When you want to change to a previous buffer:
+
+prefix: SPC
+
+| keys | effect      |
+|------+-------------|
+| b b  | goto buffer |
+
 ** Code folding
 
 Code folding is collapsing or expanding your functions so you can
