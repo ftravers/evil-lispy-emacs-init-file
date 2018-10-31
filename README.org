@@ -56,3 +56,17 @@ prefix: SPC
 |------+----------|
 | o h  | hide-all |
 | o s  | show-all |
+
+** Lispy Mode
+
+Lispy mode is how you'll want to edit clojure files.  It offers
+structural editing, which will make more sense in a minute.  To get
+into lispy mode, while in a clojure(script) file, hit any of the
+following keys:
+
+| keys   | effect                           |
+|--------+----------------------------------|
+| [      | move to before the opening paren |
+| ]      | move to after the closing paren  |
+
+you can also use the standard i, I, a, A, o, O Vi keys.
