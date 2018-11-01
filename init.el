@@ -231,9 +231,14 @@ function call."
                     "[" '(evil-lispy/enter-state-left :which-key "enter lispy mode left")
                     "]" '(evil-lispy/enter-state-right :which-key "enter lispy mode right")
                     "(" '(lispy-parens-from-normal :which-key "enter lispy, insert parens")
+                    "q" '(cider-popup-buffer-quit-function :which-key "quit")
                     "ESC" '(keyboard-escape-quit :which-key "quit"))
 
-(general-define-key :states '(normal visual emacs motion) :prefix "SPC"
+(general-define-key :prefix "SPC"
+                    :keymaps
+                    '(prog-mode-map clojure-mode-map cider-repl-mode-map
+                                    magit-status-mode-map help-mode-map)
+                    :states '(normal visual emacs motion)
                     :non-normal-prefix "C-SPC"
                     "" nil
                     "b" '(:ignore t :which-key "Buffers")
@@ -310,11 +315,9 @@ function call."
                     :states '(normal visual emacs)
                     "o" '(:ignore t :which-key "Fold")
                     "i" '(:ignore t :which-key "Fill")
-                    "j" '(:ignore t :which-key "Jump")
                     "e" '(eval-buffer :which-key "Eval Buffer")
                     "." '(xref-find-definitions :which-key "find definition")
                     "," '(xref-pop-marker-stack :which-key "pop back")
-                    "jr" '(cider-switch-to-repl-buffer :which-key "goto REPL")
                     "os" '(hs-show-all :which-key "show all")
                     "oh" '(hs-hide-all :which-key "hide all")
                     "oo" '(special-collapse-expand :which-key "toggle folding")
@@ -329,10 +332,13 @@ function call."
 
                     "c" '(hydra-cljr-help-menu/body :which-key "CLOJURE REFACTOR")
                     "e" '(:ignore t :which-key "EVAL")
+                    "j" '(:ignore t :which-key "Jump")
                     "r" '(:ignore t :which-key "REPL")
                     "t" '(:ignore t :which-key "TESTS")
 
                     "eb" '(cider-eval-buffer :which-key "eval buffer")
+
+                    "jr" '(cider-switch-to-repl-buffer :which-key "goto REPL")
 
                     "rb" '(cider-jack-in-clj&cljs :which-key "Cider Jack In CLJ & CLJS")
                     "rc" '(cider-jack-in :which-key "Make clj REPL")
@@ -342,23 +348,6 @@ function call."
                     "rn" '(load-ns-goto-repl :which-key "load buffer, set REPL namespace, goto REPL")
                     "rq" '(cider-quit :which-key "REPL quit")
                     "rs" '(cider-jack-in-cljs :which-key "Make cljscript REPL")) 
-
-(general-define-key :keymaps '(cider-repl-mode-map) :prefix "SPC"
-                    :states '(normal visual emacs)
-                    "j" '(:ignore t :which-key "JUMP")
-                    "jr" '(cider-switch-to-last-clojure-buffer :which-key "pop back"))
-
-(general-define-key :keymaps '(cider-stacktrace-mode-map)
-                    :states '(normal visual emacs)
-                    "q" '(cider-popup-buffer-quit-function :which-key "quit"))  
-
-(general-define-key :keymaps '(magit-status-mode-map help-mode-map) :prefix "SPC"
-                    :states '(normal visual emacs)
-                    "1" '(winum-select-window-1 :which-key "move window 1")
-                    "2" '(winum-select-window-2 :which-key "move window 2")
-                    "3" '(winum-select-window-3 :which-key "move window 3")
-                    "4" '(winum-select-window-4 :which-key "move window 4")
-                    "5" '(winum-select-window-5 :which-key "move window 5"))
 
 (general-define-key :keymaps 'cider-repl-mode-map 
                     :states '(normal visual emacs)
