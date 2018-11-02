@@ -16,28 +16,30 @@
 (setq use-package-always-ensure t)    ;; download packages if not already downloaded
 
 ;; ============== favorite packages ==================
-(use-package clojure-mode :mode ("\\.clj\\'"))
-(use-package evil)
+(use-package clojure-mode               ; clojure more
+  :mode ("\\.clj\\'"))
+(use-package evil)                      ; vi like key bindings
 (use-package projectile)                ; navigate git projects
 (use-package diminish)                  ; reduce mode-line clutter
 (use-package delight)                   ; change how modes appear in mode-line
-(use-package which-key :diminish which-key-mode)             ; show which keys you can press next
-(use-package lispy)
-(use-package evil-lispy)
-(use-package helm-projectile :diminish helm-mode) ; auto-complete commands
-(use-package helm-ag)				  ; silver searcher for projects
+(use-package which-key                  ; show which keys you can press next
+  :diminish which-key-mode)             
+(use-package lispy)                     ; structural lisp editing
+(use-package evil-lispy)                ; vi bindings for lispy
+(use-package helm-projectile            ; auto-complete commands
+  :diminish helm-mode)                  
+(use-package helm-ag)			; silver searcher for projects
 (use-package winum)                     ; switch between buffers using numbers
 (use-package magit) 			; git integration
-(use-package evil-magit)
-(use-package helm-ag)
-(use-package highlight-parentheses)
-(use-package company)
-(use-package buffer-move)
-(use-package el-get)
-(use-package cider)
-(use-package general :config (general-evil-setup t))
-
-; (apply use-package '(cider el-get))
+(use-package evil-magit)                ; vi bindings for magit
+(use-package helm-ag)                   ; silver searcher
+(use-package highlight-parentheses)     ; rainbow parens
+(use-package company)                   ; completion 
+(use-package buffer-move)               ; move buffers 
+(use-package el-get)                    ; package management
+(use-package cider)                     ; clojure debugger
+(use-package general                    ; key binding framework
+  :config (general-evil-setup t)) 
 
 ;; ============= Simple Config ====================
 (evil-mode 1)
@@ -57,45 +59,35 @@
 (column-number-mode 1)                  ; Show line-number and column-number in the mode line
 (fset 'yes-or-no-p 'y-or-n-p)           ; When emacs asks for "yes" or "no", let "y" or "n" sufficide
 (menu-bar-mode -1)
-
-(show-paren-mode 1)
-(setq show-paren-delay 0) 
-(set-face-background 'show-paren-match "#640000")
 (tool-bar-mode -1)
 (toggle-scroll-bar -1)
 (highlight-parentheses-mode 1)
 (save-place-mode)
-(setq help-window-select t)
+(show-paren-mode 1)
 (add-to-list 'auto-mode-alist '("\\.cljs\\'" . clojurescript-mode))
-
-;; projectile/helm config
 (projectile-global-mode)
-(setq projectile-completion-system 'helm
-      projectile-switch-project-action 'helm-projectile)
 (helm-projectile-on)
-(setq cider-font-lock-dynamically '(macro core function var))
-(setq cider-eldoc-display-context-dependent-info t)
-(setq cider-overlays-use-font-lock t)
-(setq cider-default-cljs-repl 'figwheel)
-(setq cider-cljs-lein-repl "(do (use 'figwheel-sidecar.repl-api) (start-figwheel!) (cljs-repl))")
-
-;; Modify how modes show up in the mode-line
-(delight '((helm-mode)
-	   (emacs-lisp-mode)))
+(setq help-window-select t
+      projectile-completion-system 'helm
+      projectile-switch-project-action 'helm-projectile
+      cider-font-lock-dynamically '(macro core function var)
+      cider-eldoc-display-context-dependent-info t
+      cider-overlays-use-font-lock t
+      cider-default-cljs-repl 'figwheel
+      cider-cljs-lein-repl "(do (use 'figwheel-sidecar.repl-api) (start-figwheel!) (cljs-repl))"
+      show-paren-delay 0) 
+(set-face-background 'show-paren-match "#640000")
+(delight '((helm-mode) (emacs-lisp-mode)))
 (eval-after-load "undo-tree" '(diminish 'undo-tree-mode))
 (diminish 'auto-revert-mode)
 (diminish 'projectile-mode)
 (diminish 'helm-mode)
 (diminish 'lispy-mode)
-
-;; highlight parens colors
 (setq hl-paren-colors
       '("red" "green1" "orange1" "cyan1" "yellow1" 
         "slateblue1" "magenta1" "purple")
       hl-paren-background-colors
       '("gray14" "gray14" "gray14" "gray14" "gray14" "gray14" "gray14" "gray14"))
-
-;; desktop config
 (setq desktop-dirname             (expand-file-name  "~/.emacs.d/")
       desktop-auto-save-timeout   30
       desktop-base-file-name      "emacs.desktop"
@@ -104,30 +96,18 @@
       desktop-files-not-to-save   "^$" )
 (desktop-save-mode 1)
 
-;; autocomplete in elisp ielm mode
-(defun ielm-auto-complete ()
-  "Enables `auto-complete' support in \\[ielm]."
-  (setq ac-sources '(ac-source-functions
-                     ac-source-variables
-                     ac-source-features
-                     ac-source-symbols
-                     ac-source-words-in-same-mode-buffers))
-  (add-to-list 'ac-modes 'inferior-emacs-lisp-mode)
-  (auto-complete-mode 1))
-(add-hook 'ielm-mode-hook 'ielm-auto-complete)
-
 ;; ============= Custom Functions ===================
-(defun in-lispy ()
-  (interactive)
-  (if (evil-lispy-state-p)
-      (hydra-buffer-menu/body)
-    (self-insert-command)))
-
 ;; (defun in-l()
 ;;   (interactive)
 ;;   (if (evil-lispy-state-p)
 ;;       (message "in lispy state")
 ;;     (message "NOT in lispy state")))
+
+(defun in-lispy ()
+  (interactive)
+  (if (evil-lispy-state-p)
+      (hydra-buffer-menu/body)
+    (self-insert-command)))
 
 (defun collapse-expand ()
   (interactive)
@@ -218,32 +198,33 @@ function call."
   (evil-insert-line 1)
   (call-interactively #'evil-lispy-state))
 
-;; (switch-to-buffer (find-file-noselect "~/.emacs.d/init.el"))
+(defun ielm-auto-complete ()
+  "Enables `auto-complete' support in \\[ielm]."
+  (setq ac-sources '(ac-source-functions
+                     ac-source-variables
+                     ac-source-features
+                     ac-source-symbols
+                     ac-source-words-in-same-mode-buffers))
+  (add-to-list 'ac-modes 'inferior-emacs-lisp-mode)
+  (auto-complete-mode 1))
 
 ;; ============= Hooks ==============================
+
+;; ============= HOOKS ==============================
 (add-hook 'prog-mode-hook
           (lambda ()
             (highlight-parentheses-mode 1)
             (hs-minor-mode)
             (hs-hide-all)))
-
 (add-hook 'cider-repl-mode-hook
           (lambda ()
             (highlight-parentheses-mode 1)))
-
 (add-hook 'org-mode-hook
           (lambda ()
             (auto-fill-mode 1)))
+(add-hook 'ielm-mode-hook 'ielm-auto-complete)
 
 ;; ============= GENERAL ==============================
-(general-define-key :states
-                    '(normal visual emacs)
-                    "[" '(evil-lispy/enter-state-left :which-key "enter lispy mode left")
-                    "]" '(evil-lispy/enter-state-right :which-key "enter lispy mode right")
-                    "(" '(lispy-parens-from-normal :which-key "enter lispy, insert parens")
-                    "q" '(cider-popup-buffer-quit-function :which-key "quit")
-                    "ESC" '(keyboard-escape-quit :which-key "quit"))
-
 (setq normal-keys
       '("" nil
         "b" (:ignore t :which-key "Buffers")
@@ -348,6 +329,14 @@ function call."
         "rn" (load-ns-goto-repl :which-key "load buffer, set REPL namespace, goto REPL")
         "rq" (cider-quit :which-key "REPL quit")
         "rs" (cider-jack-in-cljs :which-key "Make cljscript REPL")))
+
+(general-define-key :states
+                    '(normal visual emacs)
+                    "[" '(evil-lispy/enter-state-left :which-key "enter lispy mode left")
+                    "]" '(evil-lispy/enter-state-right :which-key "enter lispy mode right")
+                    "(" '(lispy-parens-from-normal :which-key "enter lispy, insert parens")
+                    "q" '(cider-popup-buffer-quit-function :which-key "quit")
+                    "ESC" '(keyboard-escape-quit :which-key "quit"))
 
 (apply 'general-define-key :prefix "SPC"
        :states '(normal visual emacs motion)
