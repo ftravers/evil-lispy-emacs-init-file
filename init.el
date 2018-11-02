@@ -104,6 +104,18 @@
       desktop-files-not-to-save   "^$" )
 (desktop-save-mode 1)
 
+;; autocomplete in elisp ielm mode
+(defun ielm-auto-complete ()
+  "Enables `auto-complete' support in \\[ielm]."
+  (setq ac-sources '(ac-source-functions
+                     ac-source-variables
+                     ac-source-features
+                     ac-source-symbols
+                     ac-source-words-in-same-mode-buffers))
+  (add-to-list 'ac-modes 'inferior-emacs-lisp-mode)
+  (auto-complete-mode 1))
+(add-hook 'ielm-mode-hook 'ielm-auto-complete)
+
 ;; ============= Custom Functions ===================
 (defun in-lispy ()
   (interactive)
@@ -111,14 +123,11 @@
       (hydra-buffer-menu/body)
     (self-insert-command)))
 
-(message "yess")
-
 ;; (defun in-l()
 ;;   (interactive)
 ;;   (if (evil-lispy-state-p)
 ;;       (message "in lispy state")
 ;;     (message "NOT in lispy state")))
-
 
 (defun collapse-expand ()
   (interactive)
@@ -227,132 +236,152 @@ function call."
             (auto-fill-mode 1)))
 
 ;; ============= GENERAL ==============================
-(general-define-key :states '(normal visual emacs)
+(general-define-key :states
+                    '(normal visual emacs)
                     "[" '(evil-lispy/enter-state-left :which-key "enter lispy mode left")
                     "]" '(evil-lispy/enter-state-right :which-key "enter lispy mode right")
                     "(" '(lispy-parens-from-normal :which-key "enter lispy, insert parens")
                     "q" '(cider-popup-buffer-quit-function :which-key "quit")
                     "ESC" '(keyboard-escape-quit :which-key "quit"))
 
-(general-define-key :prefix "SPC"
-                    :keymaps
-                    '(prog-mode-map clojure-mode-map cider-repl-mode-map
-                                    magit-status-mode-map help-mode-map)
-                    :states '(normal visual emacs motion)
-                    :non-normal-prefix "C-SPC"
-                    "" nil
-                    "b" '(:ignore t :which-key "Buffers")
-                    "f" '(:ignore t :which-key "Files")
-                    "g" '(:ignore t :which-key "Magit")
-                    "j" '(:ignore t :which-key "Jump")
-                    "p" '(:ignore t :which-key "Projects")
-                    "s" '(:ignore t :which-key "Search")
-                    "w" '(:ignore t :which-key "Window")
-                    "q" '(:ignore t :which-key "Quit")
+(setq normal-keys
+      '("" nil
+        "b" (:ignore t :which-key "Buffers")
+        "f" (:ignore t :which-key "Files")
+        "g" (:ignore t :which-key "Magit")
+        "i" (:ignore t :which-key "Fill")
+        "j" (:ignore t :which-key "Jump")
+        "o" (:ignore t :which-key "Fold")
+        "p" (:ignore t :which-key "Projects")
+        "s" (:ignore t :which-key "Search")
+        "w" (:ignore t :which-key "Window")
+        "q" (:ignore t :which-key "Quit")
 
-                    "1" '(winum-select-window-1 :which-key "move window 1")
-                    "2" '(winum-select-window-2 :which-key "move window 2")
-                    "3" '(winum-select-window-3 :which-key "move window 3")
-                    "4" '(winum-select-window-4 :which-key "move window 4")
-                    "5" '(winum-select-window-5 :which-key "move window 5")
+        "1" (winum-select-window-1 :which-key "move window 1")
+        "2" (winum-select-window-2 :which-key "move window 2")
+        "3" (winum-select-window-3 :which-key "move window 3")
+        "4" (winum-select-window-4 :which-key "move window 4")
+        "5" (winum-select-window-5 :which-key "move window 5")
+        "/" (helm-projectile-ag :wich-key "ag")
+        "SPC" (helm-M-x :which-key "run command")
+        "." (xref-find-definitions :which-key "find definition")
+        "," (xref-pop-marker-stack :which-key "pop back")
+        "e" (eval-buffer :which-key "Eval Buffer")
 
-                    "/" '(helm-projectile-ag :wich-key "ag")
-                    "SPC" '(helm-M-x :which-key "run command")
+        "bb" (helm-mini :which-key "buffer list")
+        "bd" (kill-this-buffer :which-key "kill buffer")
+        "bt" (transpose-windows :which-key "transpose windows")
+        "bs" (:ignore t :which-key "Buffer Save")
+        "bss" (save-buffer :which-key "save this buffer")
+        "bsa" (save-some-buffers :which-key "save all buffers")
 
-                    "bb" '(helm-mini :which-key "buffer list")
-                    "bd" '(kill-this-buffer :which-key "kill buffer")
-                    "bt" '(transpose-windows :which-key "transpose windows")
-                    "bs" '(:ignore t :which-key "Buffer Save")
-                    "bss" '(save-buffer :which-key "save this buffer")
-                    "bsa" '(save-some-buffers :which-key "save all buffers")
+        "ff" (helm-find-files :which-key "Find Files")
+        "fed" (ffs "/home/fenton/.emacs.d/init.el" :which-key "open init.el")
 
+        "gs" (magit-status :which-key "magit status")
+        "gb" (:ignore t :which-key "Magit Blame")
+        "gbb" (magit-blame :which-key "magit blame")
+        "gbq" (magit-blame-quit :which-key "magit blame quit")
 
-                    "ff" '(helm-find-files :which-key "Find Files")
-                    "fed" '(ffs "/home/fenton/.emacs.d/init.el" :which-key "open init.el")
+        "ip" (fill-paragraph :which-key "fill paragraph")
 
-                    "gs" '(magit-status :which-key "magit status")
-                    "gb" '(:ignore t :which-key "Magit Blame")
-                    "gbb" '(magit-blame :which-key "magit blame")
-                    "gbq" '(magit-blame-quit :which-key "magit blame quit")
+        "jl" (avy-goto-line :which-key "jump to line")
 
-                    "jl" '(avy-goto-line :which-key "jump to line")
+        "os" (hs-show-all :which-key "show all")
+        "oh" (hs-hide-all :which-key "hide all")
+        "oo" (special-collapse-expand :which-key "toggle folding")
 
-                    "pp" '(helm-projectile-switch-project :which-key "switch to project")
-                    "pf" '(helm-projectile-find-file :which-key "find file")
-                    "ps" '(helm-projectile-ag :which-key "find git project file")
+        "pp" (helm-projectile-switch-project :which-key "switch to project")
+        "pf" (helm-projectile-find-file :which-key "find file")
+        "ps" (helm-projectile-ag :which-key "find git project file")
 
-                    "qq" '(save-buffers-kill-terminal :which-key "Emacs Quit")
+        "qq" (save-buffers-kill-terminal :which-key "Emacs Quit")
 
-                    "sr" '(query-replace :which-key "query replace")
+        "sr" (query-replace :which-key "query replace")
 
-                    "wd" '(delete-window-balance :which-key "delete window")
-                    "w0" '(delete-window-balance :which-key "delete window")
-                    "wm" '(delete-other-windows :which-key "maximize window")
-                    "w1" '(delete-other-windows :which-key "maximize window")
-                    "wv" '(split-window-vertical-balance :which-key "split vertically")
-                    "w2" '(split-window-vertical-balance :which-key "split vertically")
-                    "w-" '(split-window-below-balance :which-key "split horizontally")
-                    "w3" '(split-window-below-balance :which-key "split horizontally")
-                    "w=" '(balance-windows :which-key "balance windows")
-                    "wt" '(transpose-windows :which-key "transpose windows")) 
+        "wd" (delete-window-balance :which-key "delete window")
+        "w0" (delete-window-balance :which-key "delete window")
+        "wm" (delete-other-windows :which-key "maximize window")
+        "w1" (delete-other-windows :which-key "maximize window")
+        "wv" (split-window-vertical-balance :which-key "split vertically")
+        "w2" (split-window-vertical-balance :which-key "split vertically")
+        "w-" (split-window-below-balance :which-key "split horizontally")
+        "w3" (split-window-below-balance :which-key "split horizontally")
+        "w=" (balance-windows :which-key "balance windows")
+        "wt" (transpose-windows :which-key "transpose windows")))
+(setq insert-keys
+      '("i" (evil-lispy-state :which-key "insert -> lispy state")
+        "I" (I-lispy :which-key "insert line -> lispy state")
+        "o" (o-lispy :which-key "open below -> lispy state")
+        "O" (O-lispy :which-key "open above -> lispy state")
+        "a" (a-lispy :which-key "append -> lispy state")
+        "A" (A-lispy :which-key "append line -> lispy state")
+        ";" (lispy-comment :which-key "lispy comment")
+        "C-u" (universal-argument :which-key "universal argument")
+        "M-." (lispy-goto-symbol :which-key "goto symbol")
+        "M-," (pop-tag-mark :which-key "pop from symbol")))
+(setq prog-keys
+      (append insert-keys
+              '("C-j" (evil-scroll-page-down :which-key "page down")
+                "C-k" (evil-scroll-page-up :which-key "page up"))))
+(setq cider-keys
+      '("'" (cider-jack-in :which-key "Cider Jack In")
+        "\"" (cider-jack-in-cljs :which-key "Cider Jack In CLJS")
+        "." (cider-find-var :which-key "find var")
+        "," (cider-pop-back :which-key "popback from var")
 
-(general-define-key :keymaps '(prog-mode-map clojure-mode-map cider-repl-mode-map)
-                    :states '(normal visual emacs)
-                    "i" '(evil-lispy-state :which-key "insert -> lispy state")
-                    "I" '(I-lispy :which-key "insert line -> lispy state")
-                    "o" '(o-lispy :which-key "open below -> lispy state")
-                    "O" '(O-lispy :which-key "open above -> lispy state")
-                    "a" '(a-lispy :which-key "append -> lispy state")
-                    "A" '(A-lispy :which-key "append line -> lispy state")
-                    ";" '(lispy-comment :which-key "lispy comment")
-                    "C-u" '(universal-argument :which-key "universal argument")
-                    "M-." '(lispy-goto-symbol :which-key "goto symbol")
-                    "M-," '(pop-tag-mark :which-key "pop from symbol")
-                    "C-j" '(evil-scroll-page-down :which-key "page down")
-                    "C-k" '(evil-scroll-page-up :which-key "page up"))
+        "c" (hydra-cljr-help-menu/body :which-key "CLOJURE REFACTOR")
+        "e" (:ignore t :which-key "EVAL")
+        "j" (:ignore t :which-key "Jump")
+        "r" (:ignore t :which-key "REPL")
+        "t" (:ignore t :which-key "TESTS")
 
-(general-define-key :keymaps 'prog-mode-map :prefix "SPC"
-                    :states '(normal visual emacs)
-                    "o" '(:ignore t :which-key "Fold")
-                    "i" '(:ignore t :which-key "Fill")
-                    "e" '(eval-buffer :which-key "Eval Buffer")
-                    "." '(xref-find-definitions :which-key "find definition")
-                    "," '(xref-pop-marker-stack :which-key "pop back")
-                    "os" '(hs-show-all :which-key "show all")
-                    "oh" '(hs-hide-all :which-key "hide all")
-                    "oo" '(special-collapse-expand :which-key "toggle folding")
-                    "ip" '(fill-paragraph :which-key "fill paragraph")) 
+        "eb" (cider-eval-buffer :which-key "eval buffer")
 
-(general-define-key :keymaps '(clojure-mode-map cider-repl-mode-map) :prefix "SPC"
-                    :states '(normal visual emacs)
-                    "'" '(cider-jack-in :which-key "Cider Jack In")
-                    "\"" '(cider-jack-in-cljs :which-key "Cider Jack In CLJS")
-                    "." '(cider-find-var :which-key "find var")
-                    "," '(cider-pop-back :which-key "popback from var")
+        "jr" (cider-switch-to-repl-buffer :which-key "goto REPL")
 
-                    "c" '(hydra-cljr-help-menu/body :which-key "CLOJURE REFACTOR")
-                    "e" '(:ignore t :which-key "EVAL")
-                    "j" '(:ignore t :which-key "Jump")
-                    "r" '(:ignore t :which-key "REPL")
-                    "t" '(:ignore t :which-key "TESTS")
+        "rb" (cider-jack-in-clj&cljs :which-key "Cider Jack In CLJ & CLJS")
+        "rc" (cider-jack-in :which-key "Make clj REPL")
+        "rd" (cider-debug-defun-at-point :which-key "instrument fun at point for debugging")
+        "ri" (cider-insert-last-sexp-in-repl :which-key "insert sexp into repl")
+        "rl" (cider-load-buffer-and-switch-to-repl-buffer :which-key "Load Buffer")
+        "rn" (load-ns-goto-repl :which-key "load buffer, set REPL namespace, goto REPL")
+        "rq" (cider-quit :which-key "REPL quit")
+        "rs" (cider-jack-in-cljs :which-key "Make cljscript REPL")))
 
-                    "eb" '(cider-eval-buffer :which-key "eval buffer")
+(apply 'general-define-key :prefix "SPC"
+       :states '(normal visual emacs motion)
+       normal-keys)
 
-                    "jr" '(cider-switch-to-repl-buffer :which-key "goto REPL")
+(apply 'general-define-key :keymaps '(prog-mode-map)
+       :states '(normal visual emacs)
+       prog-keys)  
+(apply 'general-define-key :prefix "SPC" :keymaps '(prog-mode-map)
+       :states '(normal visual emacs)
+       normal-keys)
 
-                    "rb" '(cider-jack-in-clj&cljs :which-key "Cider Jack In CLJ & CLJS")
-                    "rc" '(cider-jack-in :which-key "Make clj REPL")
-                    "rd" '(cider-debug-defun-at-point :which-key "instrument fun at point for debugging")
-                    "ri" '(cider-insert-last-sexp-in-repl :which-key "insert sexp into repl")
-                    "rl" '(cider-load-buffer-and-switch-to-repl-buffer :which-key "Load Buffer")
-                    "rn" '(load-ns-goto-repl :which-key "load buffer, set REPL namespace, goto REPL")
-                    "rq" '(cider-quit :which-key "REPL quit")
-                    "rs" '(cider-jack-in-cljs :which-key "Make cljscript REPL")) 
+(apply 'general-define-key :keymaps '(clojure-mode-map)
+       :states '(normal visual emacs)
+       prog-keys)
+(apply 'general-define-key :prefix "SPC" :keymaps '(clojure-mode-map)
+       :states '(normal visual emacs)
+       "" nil
+       (append cider-keys normal-keys))
 
-(general-define-key :keymaps 'cider-repl-mode-map 
-                    :states '(normal visual emacs)
-                    "C-j" '(cider-repl-forward-input :which-key "Next Command")
-                    "C-k" '(cider-repl-backward-input :which-key "Previous Command")) 
+(apply 'general-define-key :keymaps '(cider-repl-mode-map)
+       :states '(normal visual emacs)
+       "C-j" '(cider-repl-forward-input :which-key "Next Command")
+       "C-k" '(cider-repl-backward-input :which-key "Previous Command")
+       prog-keys)
+(apply 'general-define-key :prefix "SPC" :keymaps '(cider-repl-mode-map)
+       :states '(normal visual emacs)
+       "" nil
+       (append cider-keys normal-keys))
+
+(apply 'general-define-key :prefix "SPC" :keymaps '(magit-status-mode-map magit-revision-mode-map ielm-map help-mode-map magit-log-mode-map)
+       :states '(normal visual emacs)
+       normal-keys) 
+
 ;; ============= LISPY ==============================
 (eval-after-load "lispy"
   `(progn
@@ -368,7 +397,6 @@ function call."
      (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex)
      ;; (lispy-define-key lispy-mode-map (kbd ",") 'in-lispy)
      ))
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
