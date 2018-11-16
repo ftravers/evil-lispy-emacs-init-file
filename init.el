@@ -1,5 +1,7 @@
-(set-face-attribute 'default nil :height 120 :family "DejaVu Sans Mono")
+(set-face-attribute 'default nil :height 140 :family "DejaVu Sans Mono") 
 
+;; interesting page:
+;; https://github.com/emacs-evil/evil-collection/issues/116
 ;; ============= package archives ========
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
@@ -121,11 +123,6 @@
   (define-key lispy-mode-map-paredit key nil)
   (define-key lispy-mode-map-special key nil))
 
-(defun my-lispy-delete ()
-  (interactive)
-  (lispy-kill-at-point)
-  (lispy-down 1)) 
-
 (defun split-window-vertical-balance ()
   (interactive)
   (split-window-right)
@@ -226,8 +223,7 @@ function call."
 
 ;; ============= GENERAL ==============================
 (setq normal-keys
-      '("" nil
-        "b" (:ignore t :which-key "Buffers")
+      '("b" (:ignore t :which-key "Buffers")
         "f" (:ignore t :which-key "Files")
         "g" (:ignore t :which-key "Magit")
         "i" (:ignore t :which-key "Fill")
@@ -290,6 +286,32 @@ function call."
         "w3" (split-window-below-balance :which-key "split horizontally")
         "w=" (balance-windows :which-key "balance windows")
         "wt" (transpose-windows :which-key "transpose windows")))
+(setq cider-keys
+      (append
+       '("'" (cider-jack-in :which-key "Cider Jack In")
+         "\"" (cider-jack-in-cljs :which-key "Cider Jack In CLJS")
+         "." (cider-find-var :which-key "find var")
+         "," (cider-pop-back :which-key "popback from var")
+
+         "c" (hydra-cljr-help-menu/body :which-key "CLOJURE REFACTOR")
+         "e" (:ignore t :which-key "EVAL")
+         "j" (:ignore t :which-key "Jump")
+         "r" (:ignore t :which-key "REPL")
+         "t" (:ignore t :which-key "TESTS")
+
+         "eb" (cider-eval-buffer :which-key "eval buffer")
+
+         "jr" (cider-switch-to-repl-buffer :which-key "goto REPL")
+
+         "rb" (cider-jack-in-clj&cljs :which-key "Cider Jack In CLJ & CLJS")
+         "rc" (cider-jack-in :which-key "Make clj REPL")
+         "rd" (cider-debug-defun-at-point :which-key "instrument fun at point for debugging")
+         "ri" (cider-insert-last-sexp-in-repl :which-key "insert sexp into repl")
+         "rl" (cider-load-buffer-and-switch-to-repl-buffer :which-key "Load Buffer")
+         "rn" (load-ns-goto-repl :which-key "load buffer, set REPL namespace, goto REPL")
+         "rq" (cider-quit :which-key "REPL quit")
+         "rs" (cider-jack-in-cljs :which-key "Make cljscript REPL"))
+       normal-keys))
 (setq insert-keys
       '("i" (evil-lispy-state :which-key "insert -> lispy state")
         "I" (I-lispy :which-key "insert line -> lispy state")
@@ -305,30 +327,11 @@ function call."
       (append insert-keys
               '("C-j" (evil-scroll-page-down :which-key "page down")
                 "C-k" (evil-scroll-page-up :which-key "page up"))))
-(setq cider-keys
-      '("'" (cider-jack-in :which-key "Cider Jack In")
-        "\"" (cider-jack-in-cljs :which-key "Cider Jack In CLJS")
-        "." (cider-find-var :which-key "find var")
-        "," (cider-pop-back :which-key "popback from var")
 
-        "c" (hydra-cljr-help-menu/body :which-key "CLOJURE REFACTOR")
-        "e" (:ignore t :which-key "EVAL")
-        "j" (:ignore t :which-key "Jump")
-        "r" (:ignore t :which-key "REPL")
-        "t" (:ignore t :which-key "TESTS")
-
-        "eb" (cider-eval-buffer :which-key "eval buffer")
-
-        "jr" (cider-switch-to-repl-buffer :which-key "goto REPL")
-
-        "rb" (cider-jack-in-clj&cljs :which-key "Cider Jack In CLJ & CLJS")
-        "rc" (cider-jack-in :which-key "Make clj REPL")
-        "rd" (cider-debug-defun-at-point :which-key "instrument fun at point for debugging")
-        "ri" (cider-insert-last-sexp-in-repl :which-key "insert sexp into repl")
-        "rl" (cider-load-buffer-and-switch-to-repl-buffer :which-key "Load Buffer")
-        "rn" (load-ns-goto-repl :which-key "load buffer, set REPL namespace, goto REPL")
-        "rq" (cider-quit :which-key "REPL quit")
-        "rs" (cider-jack-in-cljs :which-key "Make cljscript REPL")))
+(setq cider-keyz (append '("" nil) cider-keys))
+(setq normal-keyz (append '("" nil) normal-keys))
+(setq insert-keyz (append '("" nil) insert-keys))
+(setq prog-keyz (append '("" nil) prog-keys))
 
 (general-define-key :states
                     '(normal visual emacs)
@@ -337,52 +340,82 @@ function call."
                     "(" '(lispy-parens-from-normal :which-key "enter lispy, insert parens")
                     "q" '(cider-popup-buffer-quit-function :which-key "quit")
                     "ESC" '(keyboard-escape-quit :which-key "quit"))
-
 (apply 'general-define-key :prefix "SPC"
        :states '(normal visual emacs motion)
-       normal-keys)
+       normal-keyz)
 
 (apply 'general-define-key :keymaps '(prog-mode-map)
        :states '(normal visual emacs)
-       prog-keys)  
-(apply 'general-define-key :prefix "SPC" :keymaps '(prog-mode-map)
-       :states '(normal visual emacs)
-       normal-keys)
+       insert-keyz)  
 
 (apply 'general-define-key :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
        prog-keys)
 (apply 'general-define-key :prefix "SPC" :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
-       "" nil
-       (append cider-keys normal-keys))
+       cider-keyz)
 
 (apply 'general-define-key :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
        "C-j" '(cider-repl-forward-input :which-key "Next Command")
        "C-k" '(cider-repl-backward-input :which-key "Previous Command")
-       prog-keys)
+       prog-keyz)
+
 (apply 'general-define-key :prefix "SPC" :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
-       "" nil
-       (append cider-keys normal-keys))
+       cider-keyz)
 
 (apply 'general-define-key :prefix "SPC" :keymaps '(magit-status-mode-map magit-revision-mode-map ielm-map help-mode-map magit-log-mode-map)
        :states '(normal visual emacs)
-       normal-keys) 
+       normal-keyz)  
 
 ;; ============= LISPY ==============================
+;; (general-def lispy-mode-map
+;;   :definer 'lispy
+;;   "y" #'lispy-new-copy                  ; lose lispy-occur -> /
+;;   ;; swap p and P
+;;   "p" #'lispy-paste
+;;   "P" #'lispy-eval-other-window
+;;   "d" #'noct:lispy-delete               ; lose lispy-different -> o
+;;   ;; like in visual state
+;;   "o" #'lispy-different                 ; lose lispy-other-mode (don't use)
+;;   "/" #'lispy-occur                     ; lose lispy-splice -> x
+;;   "x" #'lispy-splice                    ; lose lispy-x -> c
+;;   ;; "change" works as a mnemonic for some of these actions (e.g. change to
+;;   ;; cond, change to if, change to defun, and change to lambda; there's not
+;;   ;; really a common theme for the other actions)
+;;   "c" #'lispy-x                         ; lose lispy-clone -> q
+;;   "f" #'lispy-ace-paren                 ; lose lispy-flow -> n
+;;   ;; maybe
+;;   "F" #'lispy-ace-char                  ; lose lispy-follow -> ???
+;;   ;; or this
+;;   "t" #'lispy-ace-char                  ; lose lispy-teleport -> ???
+;;   ;; kind of like repeating a search
+;;   "n" #'lispy-flow
+;;   ;; I don't have a good mnemonic for this other than that q sounds vaguely
+;;   ;; similar to c
+;;   "q" #'lispy-clone
+;;   ;; swap m and v
+;;   "v" #'lispy-mark-list
+;;   "m" #'lispy-view
+
+;;   ;; extra not-vimmy personal configuration
+;;   ;; swap H and A; makes more sense given default h and a
+;;   "H" #'lispy-beginning-of-defun
+;;   "A" #'lispy-ace-symbol-replace)
+
 (eval-after-load "lispy"
   `(progn
      (my-remove-lispy-key (kbd "C-,"))
      (my-remove-lispy-key (kbd "C-j"))
      (my-remove-lispy-key (kbd "d"))
-     (lispy-define-key lispy-mode-map (kbd "d") 'my-lispy-delete)
+     (lispy-define-key lispy-mode-map (kbd "d") 'lispy-kill-at-point)
      (lispy-define-key lispy-mode-map (kbd "x") 'collapse-expand)
      (lispy-define-key lispy-mode-map (kbd "p") 'special-lispy-paste)
      (lispy-define-key lispy-mode-map (kbd "f") 'special-lispy-flow)
      (lispy-define-key lispy-mode-map (kbd "i") 'special-lispy-tab)
      (lispy-define-key lispy-mode-map (kbd ":") 'evil-ex)
+     (lispy-define-key lispy-mode-map (kbd "e") 'cider-eval-last-sexp)
      (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex)
      ;; (lispy-define-key lispy-mode-map (kbd ",") 'in-lispy)
      ))
