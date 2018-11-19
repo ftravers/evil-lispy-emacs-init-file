@@ -42,6 +42,8 @@
 (use-package cider)                     ; clojure debugger
 (use-package general                    ; key binding framework
   :config (general-evil-setup t)) 
+(use-package goto-chg)                  ; goto last edit
+(use-package repeat)                    ; make repeatable commands
 
 ;; ============= Simple Config ====================
 (evil-mode 1)
@@ -220,6 +222,12 @@ function call."
           (lambda ()
             (auto-fill-mode 1)))
 (add-hook 'ielm-mode-hook 'ielm-auto-complete)
+(defun previous-buffer-repeat ()
+  "Switch to the previous buffer in the selected window.
+You can repeat this by hitting the last key again..."
+  (interactive)
+  (require 'repeat nil t) ; Library `repeat.el' is in Emacs 22.1 and later
+  (repeat-complex-command 'next-buffer))
 
 ;; ============= GENERAL ==============================
 (setq normal-keys
@@ -230,6 +238,7 @@ function call."
         "j" (:ignore t :which-key "Jump")
         "o" (:ignore t :which-key "Fold")
         "p" (:ignore t :which-key "Projects")
+        "r" (:ignore t :wk "Registers")
         "s" (:ignore t :which-key "Search")
         "w" (:ignore t :which-key "Window")
         "q" (:ignore t :which-key "Quit")
@@ -243,7 +252,7 @@ function call."
         "SPC" (helm-M-x :which-key "run command")
         "." (xref-find-definitions :which-key "find definition")
         "," (xref-pop-marker-stack :which-key "pop back")
-        "e" (eval-buffer :which-key "Eval Buffer")
+        "e" (eval-buffer :which-key "elisp eval buffer")
 
         "bb" (helm-mini :which-key "buffer list")
         "bd" (kill-this-buffer :which-key "kill buffer")
@@ -263,10 +272,14 @@ function call."
         "ip" (fill-paragraph :which-key "fill paragraph")
 
         "jl" (avy-goto-line :which-key "jump to line")
+        "jn" (next-buffer :which-key "next buffer")
+        "jp" (previous-buffer-repeat :which-key "previous buffer")
+        "jk" (goto-last-change :wk "goto Previous change")
+        "jj" (goto-last-change-reverse :wk "goto Next change")
 
         "os" (hs-show-all :which-key "show all")
         "oh" (hs-hide-all :which-key "hide all")
-        "oo" (special-collapse-expand :which-key "toggle folding")
+        "oo" (hs-toggle-hiding :which-key "toggle folding")
 
         "pp" (helm-projectile-switch-project :which-key "switch to project")
         "pf" (helm-projectile-find-file :which-key "find file")
@@ -274,6 +287,12 @@ function call."
 
         "qq" (save-buffers-kill-terminal :which-key "Emacs Quit")
 
+        "rm" (point-to-register :wk "set current point to register")
+        "rj" (jump-to-register :wk "jump to register")
+        "rv" (view-register :wk "view registers")
+        "rn" (goto-last-change :wk "goto last change in buffer")
+        "rp" (goto-last-change-reverse :wk "goto last change in buffer - reverse")
+        
         "sr" (query-replace :which-key "query replace")
 
         "wd" (delete-window-balance :which-key "delete window")
@@ -287,26 +306,22 @@ function call."
         "w=" (balance-windows :which-key "balance windows")
         "wt" (transpose-windows :which-key "transpose windows")))
 (setq cider-common-keys
-      (append
-       '("'" (cider-jack-in :which-key "Cider Jack In")
-         "\"" (cider-jack-in-cljs :which-key "Cider Jack In CLJS")
-         "." (cider-find-var :which-key "find var")
-         "," (cider-pop-back :which-key "popback from var")
-         "c" (hydra-cljr-help-menu/body :which-key "CLOJURE REFACTOR")
-         "e" (:ignore t :which-key "EVAL")
-         "j" (:ignore t :which-key "Jump")
-         "r" (:ignore t :which-key "REPL")
-         "t" (:ignore t :which-key "TESTS")
-         "eb" (cider-eval-buffer :which-key "eval buffer")
-         "rb" (cider-jack-in-clj&cljs :which-key "Cider Jack In CLJ & CLJS")
-         "rc" (cider-jack-in :which-key "Make clj REPL")
-         "rd" (cider-debug-defun-at-point :which-key "instrument fun at point for debugging")
-         "ri" (cider-insert-last-sexp-in-repl :which-key "insert sexp into repl")
-         "rl" (cider-load-buffer :which-key "Load Buffer")
-         "rn" (cider-repl-set-ns :which-key "load buffer, set REPL namespace")
-         "rq" (cider-quit :which-key "REPL quit")
-         "rs" (cider-jack-in-cljs :which-key "Make cljscript REPL"))
-       normal-keys))
+      '("'" (cider-jack-in :which-key "Cider Jack In")
+        "\"" (cider-jack-in-cljs :which-key "Cider Jack In CLJS")
+        "." (cider-find-var :which-key "find var")
+        "," (cider-pop-back :which-key "popback from var")
+        "c" (hydra-cljr-help-menu/body :which-key "CLOJURE REFACTOR")
+        "e" (cider-eval-buffer :which-key "cider eval buffer")
+        "r" (:ignore t :which-key "REPL")
+
+        "rb" (cider-jack-in-clj&cljs :which-key "Cider Jack In CLJ & CLJS")
+        "rc" (cider-jack-in :which-key "Make clj REPL")
+        "rd" (cider-debug-defun-at-point :which-key "instrument fun at point for debugging")
+        "ri" (cider-insert-last-sexp-in-repl :which-key "insert sexp into repl")
+        "rl" (cider-load-buffer :which-key "Load Buffer")
+        "rn" (cider-repl-set-ns :which-key "load buffer, set REPL namespace")
+        "rq" (cider-quit :which-key "REPL quit")
+        "rs" (cider-jack-in-cljs :which-key "Make cljscript REPL")))
 (setq cider-files-keys
       (append
        '("jr" (cider-switch-to-repl-buffer :which-key "goto REPL"))
@@ -316,7 +331,6 @@ function call."
        '("jr" (:which-key "goto REPL")
          "jr" (cider-switch-to-last-clojure-buffer :which-key "goto REPL"))
        cider-common-keys))
-
 (setq insert-keys
       '("i" (evil-lispy-state :which-key "insert -> lispy state")
         "I" (I-lispy :which-key "insert line -> lispy state")
