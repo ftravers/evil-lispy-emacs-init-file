@@ -44,6 +44,7 @@
   :config (general-evil-setup t)) 
 (use-package goto-chg)                  ; goto last edit
 (use-package repeat)                    ; make repeatable commands
+(use-package hydra)                     ; hydra menus
 
 ;; ============= Simple Config ====================
 (evil-mode 1)
@@ -229,6 +230,50 @@ You can repeat this by hitting the last key again..."
   (require 'repeat nil t) ; Library `repeat.el' is in Emacs 22.1 and later
   (repeat-complex-command 'next-buffer))
 
+;; ============= HYDRAS ===============================
+(defhydra hydra-repl-options
+  (:color blue :hint nil)
+  "the REPL options"
+  ("," cider-switch-to-repl-buffer "switch to repl buffer" :exit t)
+  ("'" cider-jack-in "cider jack in")
+  ("\"" cider-jack-in-cljs  "clojurescript jack in")
+  ("i" cider-insert-last-sexp-in-repl "insert sexp into repl")
+  ("n" cider-repl-set-ns "set REPL namespace")
+  ("q" nil "quit" :exit t))
+
+(defhydra hydra-eval-options
+  (:color blue :hint nil)
+  "the REPL options"
+  ("b" cider-load-buffer "load (eval) buffer")
+  ("q" nil "quit" :exit t))
+
+(defhydra hydra-folding
+  ()
+  "Folding"
+  ("s" hs-show-all "show all")
+  ("h" hs-hide-all "hide-all")
+  ("q" nil "quit" :exit t))
+
+(defhydra hydra-navigate
+  ()
+  "navigation"
+  ("n" next-buffer "next buffer")
+  ("p" previous-buffer "previous buffer")
+  ("k" goto-last-change "goto last change")
+  ("j" goto-last-change-reverse "goto next change")
+  ("m" point-to-register "mark point to register")
+  ("u" jump-to-register "jump to register")
+  ("v" view-register "view registers")
+  ("q" nil "quit" :exit t))
+
+(defhydra hydra-buffer-menu
+  (:color pink :hint nil)
+  "the freaking menu"
+  ("," cider-switch-to-repl-buffer "switch to repl buffer")
+  ("e" hydra-eval-options/body "EVAL options" :exit t)
+  ("r" hydra-repl-options/body "REPL options" :exit t)
+  ("f" hydra-folding/body "Folding" :exit t)
+  ("q" nil "quit" :exit t))
 ;; ============= GENERAL ==============================
 (setq normal-keys
       '("b" (:ignore t :which-key "Buffers")
@@ -236,6 +281,7 @@ You can repeat this by hitting the last key again..."
         "g" (:ignore t :which-key "Magit")
         "i" (:ignore t :which-key "Fill")
         "j" (:ignore t :which-key "Jump")
+        "n" (hydra-navigate/body :wk "navigate")
         "o" (:ignore t :which-key "Fold")
         "p" (:ignore t :which-key "Projects")
         "r" (:ignore t :wk "Registers")
