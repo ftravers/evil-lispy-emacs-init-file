@@ -45,6 +45,8 @@
 (use-package goto-chg)                  ; goto last edit
 (use-package repeat)                    ; make repeatable commands
 (use-package hydra)                     ; hydra menus
+(use-package clomacs)                   ; call clojure from elisp and vice-versa
+(require 'clomacs)
 
 ;; ============= Simple Config ====================
 (evil-mode 1)
@@ -76,6 +78,7 @@
       projectile-completion-system 'helm
       projectile-switch-project-action 'helm-projectile
       cider-font-lock-dynamically '(macro core function var)
+      cider-pprint-fn "clojure.pprint/pprint"
       cider-eldoc-display-context-dependent-info t
       cider-overlays-use-font-lock t
       cider-default-cljs-repl 'figwheel
@@ -208,6 +211,15 @@ function call."
   (add-to-list 'ac-modes 'inferior-emacs-lisp-mode)
   (auto-complete-mode 1))
 
+(defun eval-sexp-print-in-comment ()
+  (interactive)
+  (cider-eval-print-last-sexp)
+  (beginning-of-line)
+  (insert ";; =>  "))
+
+;; (clomacs-defun adder (+ 1 1))
+;; (message (adder))
+
 ;; ============= Hooks ==============================
 
 ;; ============= HOOKS ==============================
@@ -223,115 +235,134 @@ function call."
           (lambda ()
             (auto-fill-mode 1)))
 (add-hook 'ielm-mode-hook 'ielm-auto-complete)
-(defun previous-buffer-repeat ()
-  "Switch to the previous buffer in the selected window.
-You can repeat this by hitting the last key again..."
-  (interactive)
-  (require 'repeat nil t) ; Library `repeat.el' is in Emacs 22.1 and later
-  (repeat-complex-command 'next-buffer))
 
 ;; ============= HYDRAS ===============================
-(defhydra hydra-repl-options
-  (:color blue :hint nil)
-  "the REPL options"
-  ("," cider-switch-to-repl-buffer "switch to repl buffer" :exit t)
-  ("'" cider-jack-in "cider jack in")
-  ("\"" cider-jack-in-cljs  "clojurescript jack in")
-  ("i" cider-insert-last-sexp-in-repl "insert sexp into repl")
-  ("n" cider-repl-set-ns "set REPL namespace")
-  ("q" nil "quit" :exit t))
+(defhydra hydra-jump ()
+  "
+^Registers^    ^Edit Position^     ^Jump^
+-------------------------------------------
+_m_ mark point _k_: previous       _l_ to line
+_u_ jump to    _j_: next
+_v_ view      
+"
+  ("k" goto-last-change nil)
+  ("j" goto-last-change-reverse nil)
 
-(defhydra hydra-eval-options
-  (:color blue :hint nil)
-  "the REPL options"
-  ("b" cider-load-buffer "load (eval) buffer")
-  ("q" nil "quit" :exit t))
+  ("b" hydra-buffers/body ">BUFFERS<" :exit t)
 
-(defhydra hydra-folding
-  ()
-  "Folding"
-  ("s" hs-show-all "show all")
-  ("h" hs-hide-all "hide-all")
-  ("q" nil "quit" :exit t))
+  ("m" point-to-register nil :exit t)
+  ("u" jump-to-register nil :exit t)
+  ("v" view-register nil :exit t)
 
-(defhydra hydra-navigate
-  ()
-  "navigation"
-  ("n" next-buffer "next buffer")
-  ("p" previous-buffer "previous buffer")
-  ("k" goto-last-change "goto last change")
-  ("j" goto-last-change-reverse "goto next change")
-  ("m" point-to-register "mark point to register")
-  ("u" jump-to-register "jump to register")
-  ("v" view-register "view registers")
-  ("q" nil "quit" :exit t))
+  ("l" avy-goto-line nil :exit t)
 
-(defhydra hydra-buffer-menu
-  (:color pink :hint nil)
-  "the freaking menu"
-  ("," cider-switch-to-repl-buffer "switch to repl buffer")
-  ("e" hydra-eval-options/body "EVAL options" :exit t)
-  ("r" hydra-repl-options/body "REPL options" :exit t)
-  ("f" hydra-folding/body "Folding" :exit t)
-  ("q" nil "quit" :exit t))
+  ("q" nil "quit" :exit t :color pink))
+(defhydra hydra-buffers ()
+  "
+ ^Goto^    ^^^       BUFFERS ^^^
+^Window^   ^ Goto  ^ ^ Save  ^ ^ Misc  ^  
+^------^   ^-------^ ^-------^ ^-------^
+  _1_      _k_ prev  _s_ this  _d_ kill
+  _2_      _j_ next  _a_ all   _b_ list 
+  _3_      ^ ^       ^ ^       _c_ kill (no exit)
+  _4_
+"
+  ("j" next-buffer nil)
+  ("k" previous-buffer nil)
+
+  ("s" save-buffer nil)
+  ("a" (lambda () (interactive) (save-some-buffers t)) nil :exit t)
+  ("b" helm-mini nil :exit t)
+  ("d" kill-this-buffer nil :exit t)
+  ("c" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
+
+  ("1" winum-select-window-1 nil :exit t)
+  ("2" winum-select-window-2 nil :exit t)
+  ("3" winum-select-window-3 nil :exit t)
+  ("4" winum-select-window-4 nil :exit t)
+
+  ("q" nil "quit" :exit t :color pink))
+(defhydra hydra-cider-test ()
+  "
+_p_ run test at point
+_n_ test all namespace
+_a_ all project tests
+"
+  ("p" cider-test-run-test nil :exit t)
+  ("n" cider-test-run-ns-tests nil :exit t)
+  ("a" cider-test-run-project-tests nil :exit t))
+(defhydra hydra-cider-eval ()
+  "
+EVAL
+_b_ buffer
+_r_ previous sexp and replace 
+_p_ eval sexp result in comments
+"
+  ("b" cider-eval-buffer nil :exit t)
+  ("r" cider-eval-last-sexp-and-replace nil :exit t)
+  ("p" eval-sexp-print-in-comment nil :exit t))
+(defhydra hydra-cider-test-report ()
+  "
+TESTS
+_k_ prev result
+_j_ next result
+_d_ goto definition
+"
+  ("k" cider-test-previous-result nil)
+  ("j" cider-test-next-result nil)
+  ("d" cider-test-jump :exit t)
+  )
 ;; ============= GENERAL ==============================
+
 (setq normal-keys
-      '("b" (:ignore t :which-key "Buffers")
-        "f" (:ignore t :which-key "Files")
-        "g" (:ignore t :which-key "Magit")
-        "i" (:ignore t :which-key "Fill")
-        "j" (:ignore t :which-key "Jump")
-        "n" (hydra-navigate/body :wk "navigate")
-        "o" (:ignore t :which-key "Fold")
-        "p" (:ignore t :which-key "Projects")
-        "r" (:ignore t :wk "Registers")
-        "s" (:ignore t :which-key "Search")
-        "w" (:ignore t :which-key "Window")
-        "q" (:ignore t :which-key "Quit")
+      '("f" (:ignore t :wk "Files")
+        "b" (hydra-buffers/body :wk ">BUFFERS<")
+        "g" (:ignore t :wk "Magit")
+        "i" (:ignore t :wk "Fill")
+        "j" (hydra-jump/body :wk ">JUMP<")
+        "o" (:ignore t :wk "Fold")
+        "p" (:ignore t :wk "Projects")
+        "s" (:ignore t :wk "Search")
+        "w" (:ignore t :wk "Window")
+        "q" (:ignore t :wk "Quit")
 
-        "1" (winum-select-window-1 :which-key "move window 1")
-        "2" (winum-select-window-2 :which-key "move window 2")
-        "3" (winum-select-window-3 :which-key "move window 3")
-        "4" (winum-select-window-4 :which-key "move window 4")
-        "5" (winum-select-window-5 :which-key "move window 5")
+        "1" (winum-select-window-1 :wk "move window 1")
+        "2" (winum-select-window-2 :wk "move window 2")
+        "3" (winum-select-window-3 :wk "move window 3")
+        "4" (winum-select-window-4 :wk "move window 4")
+        "5" (winum-select-window-5 :wk "move window 5")
         "/" (helm-projectile-ag :wich-key "ag")
-        "SPC" (helm-M-x :which-key "run command")
-        "." (xref-find-definitions :which-key "find definition")
-        "," (xref-pop-marker-stack :which-key "pop back")
-        "e" (eval-buffer :which-key "elisp eval buffer")
+        "SPC" (helm-M-x :wk "run command")
+        "." (xref-find-definitions :wk "find definition")
+        "," (xref-pop-marker-stack :wk "pop back")
+        "e" (eval-buffer :wk "elisp eval buffer")
 
-        "bb" (helm-mini :which-key "buffer list")
-        "bd" (kill-this-buffer :which-key "kill buffer")
-        "bt" (transpose-windows :which-key "transpose windows")
-        "bs" (:ignore t :which-key "Buffer Save")
-        "bss" (save-buffer :which-key "save this buffer")
-        "bsa" (save-some-buffers :which-key "save all buffers")
+        ;; "bb" (helm-mini :wk "buffer list")
+        ;; "bd" (kill-this-buffer :wk "kill buffer")
+        ;; "bt" (transpose-windows :wk "transpose windows")
+        ;; "bs" (:ignore t :wk "Buffer Save")
+        ;; "bss" (save-buffer :wk "save this buffer")
+        ;; "bsa" (save-some-buffers :wk "save all buffers")
 
-        "ff" (helm-find-files :which-key "Find Files")
-        "fed" (ffs "/home/fenton/.emacs.d/init.el" :which-key "open init.el")
+        "ff" (helm-find-files :wk "Find Files")
+        "fed" (ffs "/home/fenton/.emacs.d/init.el" :wk "open init.el")
 
-        "gs" (magit-status :which-key "magit status")
-        "gb" (:ignore t :which-key "Magit Blame")
-        "gbb" (magit-blame :which-key "magit blame")
-        "gbq" (magit-blame-quit :which-key "magit blame quit")
+        "gs" (magit-status :wk "magit status")
+        "gb" (:ignore t :wk "Magit Blame")
+        "gbb" (magit-blame :wk "magit blame")
+        "gbq" (magit-blame-quit :wk "magit blame quit")
 
-        "ip" (fill-paragraph :which-key "fill paragraph")
+        "ip" (fill-paragraph :wk "fill paragraph")
 
-        "jl" (avy-goto-line :which-key "jump to line")
-        "jn" (next-buffer :which-key "next buffer")
-        "jp" (previous-buffer-repeat :which-key "previous buffer")
-        "jk" (goto-last-change :wk "goto Previous change")
-        "jj" (goto-last-change-reverse :wk "goto Next change")
+        "os" (hs-show-all :wk "show all")
+        "oh" (hs-hide-all :wk "hide all")
+        "oo" (hs-toggle-hiding :wk "toggle folding")
 
-        "os" (hs-show-all :which-key "show all")
-        "oh" (hs-hide-all :which-key "hide all")
-        "oo" (hs-toggle-hiding :which-key "toggle folding")
+        "pp" (helm-projectile-switch-project :wk "switch to project")
+        "pf" (helm-projectile-find-file :wk "find file")
+        "ps" (helm-projectile-ag :wk "find git project file")
 
-        "pp" (helm-projectile-switch-project :which-key "switch to project")
-        "pf" (helm-projectile-find-file :which-key "find file")
-        "ps" (helm-projectile-ag :which-key "find git project file")
-
-        "qq" (save-buffers-kill-terminal :which-key "Emacs Quit")
+        "qq" (save-buffers-kill-terminal :wk "Emacs Quit")
 
         "rm" (point-to-register :wk "set current point to register")
         "rj" (jump-to-register :wk "jump to register")
@@ -339,59 +370,68 @@ You can repeat this by hitting the last key again..."
         "rn" (goto-last-change :wk "goto last change in buffer")
         "rp" (goto-last-change-reverse :wk "goto last change in buffer - reverse")
         
-        "sr" (query-replace :which-key "query replace")
+        "sr" (query-replace :wk "query replace")
 
-        "wd" (delete-window-balance :which-key "delete window")
-        "w0" (delete-window-balance :which-key "delete window")
-        "wm" (delete-other-windows :which-key "maximize window")
-        "w1" (delete-other-windows :which-key "maximize window")
-        "wv" (split-window-vertical-balance :which-key "split vertically")
-        "w2" (split-window-vertical-balance :which-key "split vertically")
-        "w-" (split-window-below-balance :which-key "split horizontally")
-        "w3" (split-window-below-balance :which-key "split horizontally")
-        "w=" (balance-windows :which-key "balance windows")
-        "wt" (transpose-windows :which-key "transpose windows")))
+        "wd" (delete-window-balance :wk "delete window")
+        "w0" (delete-window-balance :wk "delete window")
+        "wm" (delete-other-windows :wk "maximize window")
+        "w1" (delete-other-windows :wk "maximize window")
+        "wv" (split-window-vertical-balance :wk "split vertically")
+        "w2" (split-window-vertical-balance :wk "split vertically")
+        "w-" (split-window-below-balance :wk "split horizontally")
+        "w3" (split-window-below-balance :wk "split horizontally")
+        "w=" (balance-windows :wk "balance windows")
+        "wt" (transpose-windows :wk "transpose windows")))
 (setq cider-common-keys
-      '("'" (cider-jack-in :which-key "Cider Jack In")
-        "\"" (cider-jack-in-cljs :which-key "Cider Jack In CLJS")
-        "." (cider-find-var :which-key "find var")
-        "," (cider-pop-back :which-key "popback from var")
-        "c" (hydra-cljr-help-menu/body :which-key "CLOJURE REFACTOR")
-        "e" (cider-eval-buffer :which-key "cider eval buffer")
-        "r" (:ignore t :which-key "REPL")
+      '("'" (cider-jack-in :wk "Cider Jack In")
+        "\"" (cider-jack-in-cljs :wk "Cider Jack In CLJS")
+        "." (cider-find-var :wk "find var")
+        "," (cider-pop-back :wk "popback from var")
+        "c" (hydra-cljr-help-menu/body :wk "CLOJURE REFACTOR")
+        "e" (hydra-cider-eval/body :wk "CIDER EVAL")
+        "r" (:ignore t :wk "REPL")
+        "t" (hydra-cider-test/body :wk "TEST")
 
-        "rb" (cider-jack-in-clj&cljs :which-key "Cider Jack In CLJ & CLJS")
-        "rc" (cider-jack-in :which-key "Make clj REPL")
-        "rd" (cider-debug-defun-at-point :which-key "instrument fun at point for debugging")
-        "ri" (cider-insert-last-sexp-in-repl :which-key "insert sexp into repl")
-        "rl" (cider-load-buffer :which-key "Load Buffer")
-        "rn" (cider-repl-set-ns :which-key "load buffer, set REPL namespace")
-        "rq" (cider-quit :which-key "REPL quit")
-        "rs" (cider-jack-in-cljs :which-key "Make cljscript REPL")))
+        "rb" (cider-jack-in-clj&cljs :wk "Cider Jack In CLJ & CLJS")
+        "rc" (cider-jack-in :wk "Make clj REPL")
+        "rd" (cider-debug-defun-at-point :wk "instrument fun at point for debugging")
+        "ri" (cider-insert-last-sexp-in-repl :wk "insert sexp into repl")
+        "rl" (cider-load-buffer :wk "Load Buffer")
+        "rn" ((lambda () (interactive) (cider-repl-set-ns (cider-current-ns)) (cider-ns-reload))
+              :wk "load & set REPL ns")
+        "rq" (cider-quit :wk "REPL quit")
+        "rs" (cider-jack-in-cljs :wk "Make cljscript REPL")))
 (setq cider-files-keys
       (append
-       '("jr" (cider-switch-to-repl-buffer :which-key "goto REPL"))
+       '("jr" (cider-switch-to-repl-buffer :wk "goto REPL"))
        cider-common-keys))
 (setq cider-repl-keys
       (append
-       '("jr" (:which-key "goto REPL")
-         "jr" (cider-switch-to-last-clojure-buffer :which-key "goto REPL"))
+       '("jr" (:wk "goto REPL")
+         "jr" (cider-switch-to-last-clojure-buffer :wk "goto REPL"))
        cider-common-keys))
+(setq cider-test-report-keys
+      '(
+        "k" cider-test-previous-result)
+      ;; ("j" cider-test-next-result nil)
+  ;; ("d" cider-test-jump :exit t)
+      )
 (setq insert-keys
-      '("i" (evil-lispy-state :which-key "insert -> lispy state")
-        "I" (I-lispy :which-key "insert line -> lispy state")
-        "o" (o-lispy :which-key "open below -> lispy state")
-        "O" (O-lispy :which-key "open above -> lispy state")
-        "a" (a-lispy :which-key "append -> lispy state")
-        "A" (A-lispy :which-key "append line -> lispy state")
-        ";" (lispy-comment :which-key "lispy comment")
-        "C-u" (universal-argument :which-key "universal argument")
-        "M-." (lispy-goto-symbol :which-key "goto symbol")
-        "M-," (pop-tag-mark :which-key "pop from symbol")))
+      '("i" (evil-lispy-state :wk "insert -> lispy state")
+        ;; "I" (I-lispy :wk "insert line -> lispy state")
+        "o" (o-lispy :wk "open below -> lispy state")
+        "O" (O-lispy :wk "open above -> lispy state")
+        "a" (a-lispy :wk "append -> lispy state")
+        "A" (A-lispy :wk "append line -> lispy state")
+        ";" (lispy-comment :wk "lispy comment")
+        "C-u" (universal-argument :wk "universal argument")
+        "M-." (lispy-goto-symbol :wk "goto symbol")
+        "M-," (pop-tag-mark :wk "pop from symbol")))
 (setq prog-keys
       (append insert-keys
-              '("C-j" (evil-scroll-page-down :which-key "page down")
-                "C-k" (evil-scroll-page-up :which-key "page up"))))
+              '("C-j" (evil-scroll-page-down :wk "page down")
+                "C-k" (evil-scroll-page-up :wk "page up"))))
+;; (setq elisp-keys)
 
 ;; we put "" nil at top of key defs that are going to get used by
 ;; general-define-key, but leave it out above where we mix and match
@@ -404,12 +444,12 @@ You can repeat this by hitting the last key again..."
 
 (general-define-key :states
                     '(normal visual emacs)
-                    "[" '(evil-lispy/enter-state-left :which-key "enter lispy mode left")
-                    "]" '(evil-lispy/enter-state-right :which-key "enter lispy mode right")
-                    "(" '(lispy-parens-from-normal :which-key "enter lispy, insert parens")
-                    "q" '(cider-popup-buffer-quit-function :which-key "quit")
+                    "[" '(evil-lispy/enter-state-left :wk "enter lispy mode left")
+                    "]" '(evil-lispy/enter-state-right :wk "enter lispy mode right")
+                    "(" '(lispy-parens-from-normal :wk "enter lispy, insert parens")
+                    "q" '(cider-popup-buffer-quit-function :wk "quit")
                     "C-p" '(helm-show-kill-ring :wk "show kill ring")
-                    "ESC" '(keyboard-escape-quit :which-key "quit"))
+                    "ESC" '(keyboard-escape-quit :wk "quit"))
 (apply 'general-define-key :prefix "SPC"
        :states '(normal visual emacs motion)
        normal-keyz)
@@ -424,8 +464,8 @@ You can repeat this by hitting the last key again..."
        cider-files-keyz)
 (apply 'general-define-key :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
-       "C-j" '(cider-repl-forward-input :which-key "Next Command")
-       "C-k" '(cider-repl-backward-input :which-key "Previous Command")
+       "C-j" '(cider-repl-forward-input :wk "Next Command")
+       "C-k" '(cider-repl-backward-input :wk "Previous Command")
        prog-keyz)
 (apply 'general-define-key :prefix "," :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
@@ -441,10 +481,20 @@ You can repeat this by hitting the last key again..."
        normal-keyz)  
 (general-def org-mode-map "C-'" 'org-edit-special)
 (general-def org-src-mode-map "C-'" 'org-edit-src-abort)
-
-(general-def magit-hunk-section-map
-  "-" 'magit-diff-less-context          ; not really working... maybe supply a count?
+;; (general-def emacs-lisp-mode-map "C-'" 'org-edit-src-abort)
+(general-def magit-hunk-section-map ; not really working...?
+  "-" 'magit-diff-less-context         
   "+" 'magit-diff-more-context)
+;; (general-def cider-test-report-map "b" 'hydra-buffers/body)
+;; (apply 'general-define-key :keymaps '(cider-test-report-mode-map)
+;;                     :states '(normal visual emacs)
+;;                     "" nil
+;;                     "b" 'hydra-buffers/body)
+;; (apply 'general-define-key :keymaps '(emacs-lisp-mode-map)
+;;                     :states '(normal visual emacs)
+;;                     "" nil
+;;                     "b" 'hydra-buffers/body)
+
 ;; ============= LISPY ==============================
 ;; (general-def lispy-mode-map
 ;;   :definer 'lispy
@@ -492,7 +542,8 @@ You can repeat this by hitting the last key again..."
      (lispy-define-key lispy-mode-map (kbd "f") 'special-lispy-flow)
      (lispy-define-key lispy-mode-map (kbd "i") 'special-lispy-tab)
      (lispy-define-key lispy-mode-map (kbd ":") 'evil-ex)
-     (lispy-define-key lispy-mode-map (kbd "e") 'cider-eval-last-sexp)
+     ;; (lispy-define-key lispy-mode-map (kbd "e") 'cider-eval-last-sexp)
+     (lispy-define-key lispy-mode-map (kbd "e") 'special-lispy-eval) 
      (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex)
      ;; (lispy-define-key lispy-mode-map (kbd ",") 'in-lispy)
      ))
@@ -503,7 +554,7 @@ You can repeat this by hitting the last key again..."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (cider winum which-key use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move))))
+    (sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
