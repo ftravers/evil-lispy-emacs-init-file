@@ -219,6 +219,29 @@ function call."
 
 ;; (clomacs-defun adder (+ 1 1))
 ;; (message (adder))
+(defun e-clojure ()
+  "call cider-eval-last-sexp when in special position"
+  (interactive)
+  (if (evil-lispy-state-p)
+      (cider-eval-last-sexp)
+    (self-insert-command 1)))
+
+(defun lispy-right-p ()
+  "Return t if after lispy-right character."
+  (looking-back "[])}]"
+                (line-beginning-position)))
+
+(defun lispy-left-p ()
+  "Return t if on lispy-left character."
+  (looking-at "[([{]"))
+
+(defun e-lisp ()
+  "call eval-last-sexp if in special position"
+  (interactive)
+  (if (and (evil-lispy-state-p)
+           (or (lispy-right-p) (lispy-left-p)))
+      (call-interactively #'eval-last-sexp)
+    (self-insert-command 1)))
 
 ;; ============= Hooks ==============================
 
@@ -431,7 +454,9 @@ _d_ goto definition
       (append insert-keys
               '("C-j" (evil-scroll-page-down :wk "page down")
                 "C-k" (evil-scroll-page-up :wk "page up"))))
+
 ;; (setq elisp-keys)
+
 
 ;; we put "" nil at top of key defs that are going to get used by
 ;; general-define-key, but leave it out above where we mix and match
@@ -529,12 +554,15 @@ _d_ goto definition
 ;;   ;; swap H and A; makes more sense given default h and a
 ;;   "H" #'lispy-beginning-of-defun
 ;;   "A" #'lispy-ace-symbol-replace)
+(general-def clojure-mode-map "e" 'e-clojure)
+(general-def emacs-lisp-mode-map "e" 'e-lisp)
 
 (eval-after-load "lispy"
   `(progn
      (my-remove-lispy-key (kbd "C-,"))
      (my-remove-lispy-key (kbd "C-j"))
      (my-remove-lispy-key (kbd "d"))
+     (my-remove-lispy-key (kbd "e"))
      (lispy-define-key lispy-mode-map (kbd "d") 'lispy-kill-at-point)
      (lispy-define-key lispy-mode-map (kbd "x") 'collapse-expand)
      (lispy-define-key lispy-mode-map (kbd "y") 'special-lispy-new-copy)
@@ -543,7 +571,7 @@ _d_ goto definition
      (lispy-define-key lispy-mode-map (kbd "i") 'special-lispy-tab)
      (lispy-define-key lispy-mode-map (kbd ":") 'evil-ex)
      ;; (lispy-define-key lispy-mode-map (kbd "e") 'cider-eval-last-sexp)
-     (lispy-define-key lispy-mode-map (kbd "e") 'special-lispy-eval) 
+     ;; (lispy-define-key lispy-mode-map (kbd "e") 'special-lispy-eval)
      (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex)
      ;; (lispy-define-key lispy-mode-map (kbd ",") 'in-lispy)
      ))
