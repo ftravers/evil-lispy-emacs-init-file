@@ -47,6 +47,8 @@
 (use-package hydra)                     ; hydra menus
 (use-package clomacs)                   ; call clojure from elisp and vice-versa
 (require 'clomacs)
+(use-package ivy)
+;; (use-package cl)
 
 ;; ============= Simple Config ====================
 (evil-mode 1)
@@ -82,6 +84,10 @@
       cider-eldoc-display-context-dependent-info t
       cider-overlays-use-font-lock t
       cider-default-cljs-repl 'figwheel
+      eldoc-echo-area-use-multiline-p 'truncate-sym-name-if-fit
+      cider-eldoc-display-context-dependent-info t
+      cider-overlays-use-font-lock t
+      cider-prompt-for-symbol nil
       cider-cljs-lein-repl "(do (use 'figwheel-sidecar.repl-api) (start-figwheel!) (cljs-repl))"
       show-paren-delay 0) 
 (set-face-background 'show-paren-match "#640000")
@@ -219,13 +225,6 @@ function call."
 
 ;; (clomacs-defun adder (+ 1 1))
 ;; (message (adder))
-(defun e-clojure ()
-  "call cider-eval-last-sexp when in special position"
-  (interactive)
-  (if (evil-lispy-state-p)
-      (cider-eval-last-sexp)
-    (self-insert-command 1)))
-
 (defun lispy-right-p ()
   "Return t if after lispy-right character."
   (looking-back "[])}]"
@@ -235,14 +234,26 @@ function call."
   "Return t if on lispy-left character."
   (looking-at "[([{]"))
 
+(defun in-special-p ()
+  (and (evil-lispy-state-p)
+       (or (lispy-right-p) (lispy-left-p))))
+
+(defun e-clojure ()
+  "call cider-eval-last-sexp when in special position"
+  (interactive)
+  (if (in-special-p)
+      (cider-eval-last-sexp)
+    (self-insert-command 1)))
+
 (defun e-lisp ()
   "call eval-last-sexp if in special position"
   (interactive)
-  (if (and (evil-lispy-state-p)
-           (or (lispy-right-p) (lispy-left-p)))
+  (if (in-special-p)
       (call-interactively #'eval-last-sexp)
     (self-insert-command 1)))
-
+(defun cpap ()
+  (interactive)
+  (message (cider-complete-at-point)))
 ;; ============= Hooks ==============================
 
 ;; ============= HOOKS ==============================
@@ -253,12 +264,19 @@ function call."
             (hs-hide-all)))
 (add-hook 'cider-repl-mode-hook
           (lambda ()
-            (highlight-parentheses-mode 1)))
+            (highlight-parentheses-mode 1)
+            (company-mode)))
 (add-hook 'org-mode-hook
           (lambda ()
             (auto-fill-mode 1)))
 (add-hook 'ielm-mode-hook 'ielm-auto-complete)
-
+(add-hook 'cider-mode-hook
+          (lambda ()
+            (highlight-parentheses-mode 1)
+            (company-mode)
+            (cider-company-enable-fuzzy-completion)
+            (eldoc-mode)))
+ 
 ;; ============= HYDRAS ===============================
 (defhydra hydra-jump ()
   "
@@ -452,8 +470,10 @@ _d_ goto definition
         "M-," (pop-tag-mark :wk "pop from symbol")))
 (setq prog-keys
       (append insert-keys
-              '("C-j" (evil-scroll-page-down :wk "page down")
-                "C-k" (evil-scroll-page-up :wk "page up"))))
+              '("C-n" (evil-scroll-page-down :wk "down")
+                "C-p" (evil-scroll-page-up :wk "up")
+                "C-k" (lispy-kill-sentence :wk "kill")
+                )))
 
 ;; (setq elisp-keys)
 
@@ -582,7 +602,7 @@ _d_ goto definition
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move))))
+    (cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
