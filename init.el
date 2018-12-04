@@ -253,12 +253,15 @@ function call."
       (call-interactively #'eval-last-sexp)
     (self-insert-command 1)))
 
+
 (defun query-replace-symbol-at-point (inp)
+  "jumps to top of file to start the replacing...eeek, dont like
+that."
   (interactive
    (let ((symb-at-pt (thing-at-point 'symbol)))
      (list (read-string (format "Replace %s with: " symb-at-pt) nil 'my-history))))
   (let ((symb-at-pt (thing-at-point 'symbol)))
-    (query-replace symb-at-pt inp)))
+    (query-replace symb-at-pt inp t (point-min) (point-max))))
 
 (defun forward-search-symbol-at-point ()
   "search forward the symbol at point"
@@ -530,7 +533,7 @@ _q_ quit
 ;; definitions.
 (setq cider-files-keyz (append '("" nil) cider-files-keys))
 (setq cider-repl-keyz (append '("" nil) cider-repl-keys))
-(setq normal-keyz (append '("" nil) normal-keys))
+(setq normal-space (append '("" nil) normal-keys))
 (setq prog-normal (append '("" nil) insert-keys))
 (setq prog-keyz (append '("" nil ) prog-keys))
 
@@ -542,16 +545,13 @@ _q_ quit
                     "q" '(cider-popup-buffer-quit-function :wk "quit")
                     "C-p" '(helm-show-kill-ring :wk "show kill ring")
                     "ESC" '(keyboard-escape-quit :wk "quit"))
-(apply 'general-define-key :prefix "SPC"
-       :states '(normal visual emacs motion)
-       normal-keyz)
 (apply 'general-define-key :keymaps '(prog-mode-map)
        :states '(normal visual emacs)
        prog-normal)
-
 (apply 'general-define-key :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
        prog-keys)
+
 (apply 'general-define-key :prefix "," :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
        cider-files-keyz)
@@ -571,7 +571,10 @@ _q_ quit
          help-mode-map
          magit-log-mode-map)
        :states '(normal visual emacs)
-       normal-keyz)  
+       normal-space)
+(apply 'general-define-key :prefix "SPC"
+       :states '(normal visual emacs motion)
+       normal-space)  
 (general-def org-mode-map "C-'" 'org-edit-special)
 (general-def org-src-mode-map "C-'" 'org-edit-src-abort)
 ;; (general-def emacs-lisp-mode-map "C-'" 'org-edit-src-abort)
