@@ -407,8 +407,9 @@ _q_ quit
 
 ;; ============= GENERAL ==============================
 
-(setq normal-keys
-      '("f" (:ignore t :wk "Files")
+(setq normal-spc
+      '("" nil
+        "f" (:ignore t :wk "Files")
         "b" (hydra-buffers/body :wk ">BUFFERS<")
         "g" (:ignore t :wk "Magit")
         "i" (:ignore t :wk "Fill")
@@ -509,6 +510,13 @@ _q_ quit
       ;; ("j" cider-test-next-result nil)
   ;; ("d" cider-test-jump :exit t)
       )
+;; we put "" nil at top of key defs that are going to get used by
+;; general-define-key, but leave it out above where we mix and match
+;; definitions.
+(setq cider-files-keyz (append '("" nil) cider-files-keys))
+(setq cider-repl-keyz (append '("" nil) cider-repl-keys))
+(setq prog-normal (append '("" nil) insert-keys))
+
 (setq insert-keys
       '("i" (evil-lispy-state :wk "insert -> lispy state")
         ;; "I" (I-lispy :wk "insert line -> lispy state")
@@ -528,14 +536,15 @@ _q_ quit
                 "C-k" (lispy-kill-sentence :wk "kill")
                 "C-]" (end-of-parent-sexp : wk "end of sexp")
                 "q" (self-insert-command :wk "self insert"))))
-;; we put "" nil at top of key defs that are going to get used by
-;; general-define-key, but leave it out above where we mix and match
-;; definitions.
-(setq cider-files-keyz (append '("" nil) cider-files-keys))
-(setq cider-repl-keyz (append '("" nil) cider-repl-keys))
-(setq normal-space (append '("" nil) normal-keys))
-(setq prog-normal (append '("" nil) insert-keys))
 (setq prog-keyz (append '("" nil ) prog-keys))
+(apply 'general-define-key :keymaps '(clojure-mode-map)
+       :states '(normal visual emacs)
+       prog-keys)
+(apply 'general-define-key :keymaps '(cider-repl-mode-map)
+       :states '(normal visual emacs)
+       "C-j" '(cider-repl-forward-input :wk "Next Command")
+       "C-k" '(cider-repl-backward-input :wk "Previous Command")
+       prog-keyz)
 
 (general-define-key :states
                     '(normal visual emacs)
@@ -545,21 +554,14 @@ _q_ quit
                     "q" '(cider-popup-buffer-quit-function :wk "quit")
                     "C-p" '(helm-show-kill-ring :wk "show kill ring")
                     "ESC" '(keyboard-escape-quit :wk "quit"))
+
 (apply 'general-define-key :keymaps '(prog-mode-map)
        :states '(normal visual emacs)
        prog-normal)
-(apply 'general-define-key :keymaps '(clojure-mode-map)
-       :states '(normal visual emacs)
-       prog-keys)
 
 (apply 'general-define-key :prefix "," :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
        cider-files-keyz)
-(apply 'general-define-key :keymaps '(cider-repl-mode-map)
-       :states '(normal visual emacs)
-       "C-j" '(cider-repl-forward-input :wk "Next Command")
-       "C-k" '(cider-repl-backward-input :wk "Previous Command")
-       prog-keyz)
 (apply 'general-define-key :prefix "," :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
        cider-repl-keyz)
@@ -571,10 +573,10 @@ _q_ quit
          help-mode-map
          magit-log-mode-map)
        :states '(normal visual emacs)
-       normal-space)
+       normal-spc)
 (apply 'general-define-key :prefix "SPC"
        :states '(normal visual emacs motion)
-       normal-space)  
+       normal-spc)  
 (general-def org-mode-map "C-'" 'org-edit-special)
 (general-def org-src-mode-map "C-'" 'org-edit-src-abort)
 ;; (general-def emacs-lisp-mode-map "C-'" 'org-edit-src-abort)
