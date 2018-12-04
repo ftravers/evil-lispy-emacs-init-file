@@ -48,6 +48,7 @@
 (use-package clomacs)                   ; call clojure from elisp and vice-versa
 (require 'clomacs)
 (use-package ivy)
+(require 'thingatpt)
 ;; (use-package cl)
 
 ;; ============= Simple Config ====================
@@ -251,9 +252,24 @@ function call."
   (if (in-special-p)
       (call-interactively #'eval-last-sexp)
     (self-insert-command 1)))
-(defun cpap ()
+
+(defun query-replace-symbol-at-point (inp)
+  (interactive
+   (let ((symb-at-pt (thing-at-point 'symbol)))
+     (list (read-string (format "Replace %s with: " symb-at-pt) nil 'my-history))))
+  (let ((symb-at-pt (thing-at-point 'symbol)))
+    (query-replace symb-at-pt inp)))
+
+(defun forward-search-symbol-at-point ()
+  "search forward the symbol at point"
   (interactive)
-  (message (cider-complete-at-point)))
+  (let ((symb-at-pt (thing-at-point 'symbol)))
+    (search-forward symb-at-pt)))
+
+(defun end-of-parent-sexp () (interactive)
+       (evil-lispy/enter-state-left)
+       (special-lispy-beginning-of-defun)
+       (o-lispy))
 ;; ============= Hooks ==============================
 
 ;; ============= HOOKS ==============================
@@ -351,8 +367,30 @@ _d_ goto definition
 "
   ("k" cider-test-previous-result nil)
   ("j" cider-test-next-result nil)
-  ("d" cider-test-jump :exit t)
-  )
+  ("d" cider-test-jump :exit t))
+
+(defhydra hydra-prog-search ()
+  "
+SEARCH
+_._ symbol @pt
+_j_ repeat search symbol forward 
+_k_ repeat search symbol backward
+_q_ stop searching
+"
+  ("." isearch-forward-symbol-at-point nil)
+  ("j" isearch-repeat-forward nil)
+  ("k" isearch-repeat-backward nil)
+  ("q" isearch-exit nil :exit t))
+
+(defhydra hydra-prog-replace ()
+  "
+REPLACE
+_r_ query replace symbol @pt
+_q_ stop searching
+"
+  ("r" query-replace-symbol-at-point nil :exit t)
+  ("q" isearch-exit nil :exit t))
+
 ;; ============= GENERAL ==============================
 
 (setq normal-keys
@@ -430,7 +468,7 @@ _d_ goto definition
         "," (cider-pop-back :wk "popback from var")
         "c" (hydra-cljr-help-menu/body :wk "CLOJURE REFACTOR")
         "e" (hydra-cider-eval/body :wk "CIDER EVAL")
-        "r" (:ignore t :wk "REPL")
+        "r" (:ignore t :wk "REPL**")
         "t" (hydra-cider-test/body :wk "TEST")
 
         "rb" (cider-jack-in-clj&cljs :wk "Cider Jack In CLJ & CLJS")
@@ -473,19 +511,20 @@ _d_ goto definition
               '("C-n" (evil-scroll-page-down :wk "down")
                 "C-p" (evil-scroll-page-up :wk "up")
                 "C-k" (lispy-kill-sentence :wk "kill")
-                )))
-
-;; (setq elisp-keys)
-
-
+                "C-]" (end-of-parent-sexp : wk "end of sexp")
+                "q" (self-insert-command :wk "self insert"))))
 ;; we put "" nil at top of key defs that are going to get used by
 ;; general-define-key, but leave it out above where we mix and match
 ;; definitions.
 (setq cider-files-keyz (append '("" nil) cider-files-keys))
 (setq cider-repl-keyz (append '("" nil) cider-repl-keys))
 (setq normal-keyz (append '("" nil) normal-keys))
-(setq insert-keyz (append '("" nil) insert-keys))
-(setq prog-keyz (append '("" nil) prog-keys))
+(setq prog-normal (append '("" nil) insert-keys))
+(setq prog-keyz (append '("" nil ) prog-keys))
+(setq prog-normal-comma '("" nil
+                          "r" nil
+                          "s" (hydra-prog-search/body :wk ">Search<")
+                          "r" (hydra-prog-replace/body :wk ">Replace<")))
 
 (general-define-key :states
                     '(normal visual emacs)
@@ -500,7 +539,10 @@ _d_ goto definition
        normal-keyz)
 (apply 'general-define-key :keymaps '(prog-mode-map)
        :states '(normal visual emacs)
-       insert-keyz)  
+       prog-normal)
+(apply 'general-define-key :prefix "," :keymaps '(prog-mode-map)
+       :states '(normal visual emacs)
+       prog-normal-comma)  
 (apply 'general-define-key :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
        prog-keys)
