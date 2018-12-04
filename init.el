@@ -515,7 +515,6 @@ _q_ quit
 ;; definitions.
 (setq cider-files-keyz (append '("" nil) cider-files-keys))
 (setq cider-repl-keyz (append '("" nil) cider-repl-keys))
-(setq prog-normal (append '("" nil) insert-keys))
 
 (setq insert-keys
       '("i" (evil-lispy-state :wk "insert -> lispy state")
@@ -536,7 +535,12 @@ _q_ quit
                 "C-k" (lispy-kill-sentence :wk "kill")
                 "C-]" (end-of-parent-sexp : wk "end of sexp")
                 "q" (self-insert-command :wk "self insert"))))
-(setq prog-keyz (append '("" nil ) prog-keys))
+(setq cider-repl-normal (append '("" nil ) prog-keys))
+(setq prog-normal (append '("" nil) insert-keys))
+
+(apply 'general-define-key :keymaps '(prog-mode-map)
+       :states '(normal visual emacs)
+       prog-normal)
 (apply 'general-define-key :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
        prog-keys)
@@ -544,7 +548,7 @@ _q_ quit
        :states '(normal visual emacs)
        "C-j" '(cider-repl-forward-input :wk "Next Command")
        "C-k" '(cider-repl-backward-input :wk "Previous Command")
-       prog-keyz)
+       cider-repl-normal)
 
 (general-define-key :states
                     '(normal visual emacs)
@@ -554,10 +558,6 @@ _q_ quit
                     "q" '(cider-popup-buffer-quit-function :wk "quit")
                     "C-p" '(helm-show-kill-ring :wk "show kill ring")
                     "ESC" '(keyboard-escape-quit :wk "quit"))
-
-(apply 'general-define-key :keymaps '(prog-mode-map)
-       :states '(normal visual emacs)
-       prog-normal)
 
 (apply 'general-define-key :prefix "," :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
