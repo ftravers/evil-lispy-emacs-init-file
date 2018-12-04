@@ -372,12 +372,12 @@ _d_ goto definition
 (defhydra hydra-prog-search ()
   "
 SEARCH
-_._ symbol @pt
+_s_ symbol @pt
 _j_ repeat search symbol forward 
 _k_ repeat search symbol backward
 _q_ stop searching
 "
-  ("." isearch-forward-symbol-at-point nil)
+  ("s" isearch-forward-symbol-at-point nil)
   ("j" isearch-repeat-forward nil)
   ("k" isearch-repeat-backward nil)
   ("q" isearch-exit nil :exit t))
@@ -389,7 +389,18 @@ _r_ query replace symbol @pt
 _q_ stop searching
 "
   ("r" query-replace-symbol-at-point nil :exit t)
-  ("q" isearch-exit nil :exit t))
+  ("q" nil "quit" :exit t))
+
+(defhydra hydra-prog-comma ()
+  "
+REPLACE
+_r_ >REPLACE<
+_s_ >SEARCH<
+_q_ quit
+"
+  ("r" hydra-prog-replace/body :exit t)
+  ("s" hydra-prog-search/body :exit t)
+  ("q" nil "quit" :exit t))
 
 ;; ============= GENERAL ==============================
 
@@ -503,6 +514,7 @@ _q_ stop searching
         "a" (a-lispy :wk "append -> lispy state")
         "A" (A-lispy :wk "append line -> lispy state")
         ";" (lispy-comment :wk "lispy comment")
+        "," (hydra-prog-comma/body :wk ">>>Search<<<")
         "C-u" (universal-argument :wk "universal argument")
         "M-." (lispy-goto-symbol :wk "goto symbol")
         "M-," (pop-tag-mark :wk "pop from symbol")))
@@ -521,10 +533,6 @@ _q_ stop searching
 (setq normal-keyz (append '("" nil) normal-keys))
 (setq prog-normal (append '("" nil) insert-keys))
 (setq prog-keyz (append '("" nil ) prog-keys))
-(setq prog-normal-comma '("" nil
-                          "r" nil
-                          "s" (hydra-prog-search/body :wk ">Search<")
-                          "r" (hydra-prog-replace/body :wk ">Replace<")))
 
 (general-define-key :states
                     '(normal visual emacs)
@@ -540,9 +548,7 @@ _q_ stop searching
 (apply 'general-define-key :keymaps '(prog-mode-map)
        :states '(normal visual emacs)
        prog-normal)
-(apply 'general-define-key :prefix "," :keymaps '(prog-mode-map)
-       :states '(normal visual emacs)
-       prog-normal-comma)  
+
 (apply 'general-define-key :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
        prog-keys)
