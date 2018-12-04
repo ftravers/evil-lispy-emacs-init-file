@@ -423,7 +423,7 @@ _q_ quit
         "5" (winum-select-window-5 :wk "move window 5")
         "/" (helm-projectile-ag :wich-key "ag")
         "SPC" (helm-M-x :wk "run command")
-        "." (xref-find-definitions :wk "find definition")
+        "." (lispy-goto-symbol :wk "find definition")
         "," (xref-pop-marker-stack :wk "pop back")
         "e" (eval-buffer :wk "elisp eval buffer")
 
