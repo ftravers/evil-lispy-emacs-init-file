@@ -348,31 +348,36 @@ _v_ view
 _p_ run test at point
 _n_ test all namespace
 _a_ all project tests
+_q_ quit
 "
   ("p" cider-test-run-test nil :exit t)
   ("n" cider-test-run-ns-tests nil :exit t)
-  ("a" cider-test-run-project-tests nil :exit t))
+  ("a" cider-test-run-project-tests nil :exit t)
+  ("q" nil :exit t))
 (defhydra hydra-cider-eval ()
   "
 EVAL
 _b_ buffer
 _r_ previous sexp and replace 
 _p_ eval sexp result in comments
+_q_ quit
 "
   ("b" cider-eval-buffer nil :exit t)
   ("r" cider-eval-last-sexp-and-replace nil :exit t)
-  ("p" eval-sexp-print-in-comment nil :exit t))
+  ("p" eval-sexp-print-in-comment nil :exit t)
+  ("q" nil :exit t))
 (defhydra hydra-cider-test-report ()
   "
 TESTS
 _k_ prev result
 _j_ next result
 _d_ goto definition
+_q_ quit
 "
   ("k" cider-test-previous-result nil)
   ("j" cider-test-next-result nil)
-  ("d" cider-test-jump :exit t))
-
+  ("d" cider-test-jump :exit t)
+  ("q" nil :exit t))
 (defhydra hydra-prog-search ()
   "
 SEARCH
@@ -385,7 +390,6 @@ _q_ stop searching
   ("j" isearch-repeat-forward nil)
   ("k" isearch-repeat-backward nil)
   ("q" isearch-exit nil :exit t))
-
 (defhydra hydra-prog-replace ()
   "
 REPLACE
@@ -394,7 +398,6 @@ _q_ stop searching
 "
   ("r" query-replace-symbol-at-point nil :exit t)
   ("q" nil "quit" :exit t))
-
 (defhydra hydra-prog-comma ()
   "
 REPLACE
@@ -407,7 +410,6 @@ _q_ quit
   ("q" nil "quit" :exit t))
 
 ;; ============= GENERAL ==============================
-
 (setq normal-spc
       '("" nil
         "f" (:ignore t :wk "Files")
