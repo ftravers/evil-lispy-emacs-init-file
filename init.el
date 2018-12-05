@@ -82,6 +82,7 @@
       projectile-switch-project-action 'helm-projectile
       cider-font-lock-dynamically '(macro core function var)
       cider-pprint-fn "clojure.pprint/pprint"
+      cider-repl-pop-to-buffer-on-connect nil
       cider-eldoc-display-context-dependent-info t
       cider-overlays-use-font-lock t
       cider-default-cljs-repl 'figwheel
@@ -274,6 +275,8 @@ that."
        (evil-lispy/enter-state-left)
        (special-lispy-beginning-of-defun)
        (o-lispy))
+
+
 ;; ============= Hooks ==============================
 
 ;; ============= HOOKS ==============================
@@ -351,18 +354,19 @@ TESTS
 _p_ run test at point    _k_ prev result      _f_ re-run failed
 _n_ test all namespace   _j_ next result
 _a_ all project tests    _d_ goto definition
-_q_ quit
+_q_ quit                 _e_ show error
 "
   ("p" cider-test-run-test nil :exit t)
   ("n" cider-test-run-ns-tests nil :exit t)
   ("a" cider-test-run-project-tests nil :exit t)
+
   ("k" cider-test-previous-result nil)
   ("j" cider-test-next-result nil)
   ("d" cider-test-jump :exit t)
-
+  ("e" cider-test-stacktrace nil)
+  
   ("f" cider-test-rerun-failed-tests nil)
   ("q" nil nil :exit t))
-
 (defhydra hydra-cider-eval ()
   "
 EVAL
@@ -491,7 +495,11 @@ _q_ quit
         "rd" (cider-debug-defun-at-point :wk "instrument fun at point for debugging")
         "ri" (cider-insert-last-sexp-in-repl :wk "insert sexp into repl")
         "rl" (cider-load-buffer :wk "Load Buffer")
-        "rn" ((lambda () (interactive) (cider-repl-set-ns (cider-current-ns)) (cider-ns-reload))
+        "rn" ((lambda ()
+                (interactive)
+                (cider-repl-set-ns
+                 (cider-current-ns))
+                (cider-ns-reload))
               :wk "load & set REPL ns")
         "rq" (cider-quit :wk "REPL quit")
         "rs" (cider-jack-in-cljs :wk "Make cljscript REPL")))
