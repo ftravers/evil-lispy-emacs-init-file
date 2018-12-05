@@ -91,6 +91,7 @@
       cider-prompt-for-symbol nil
       cider-cljs-lein-repl "(do (use 'figwheel-sidecar.repl-api) (start-figwheel!) (cljs-repl))"
       show-paren-delay 0) 
+(cider-auto-test-mode 1)
 (set-face-background 'show-paren-match "#640000")
 (delight '((helm-mode) (emacs-lisp-mode)))
 (eval-after-load "undo-tree" '(diminish 'undo-tree-mode))
@@ -536,19 +537,20 @@ _q_ quit
                 "C-]" (end-of-parent-sexp : wk "end of sexp")
                 "q" (self-insert-command :wk "self insert"))))
 (setq cider-repl-normal (append '("" nil ) prog-keys))
-(setq prog-normal (append '("" nil) insert-keys))
+;; (setq prog-normal (append '("" nil) insert-keys))
 
 (apply 'general-define-key :keymaps '(prog-mode-map)
        :states '(normal visual emacs)
-       prog-normal)
-(apply 'general-define-key :keymaps '(clojure-mode-map)
-       :states '(normal visual emacs)
        prog-keys)
+;; (apply 'general-define-key :keymaps '(clojure-mode-map)
+;;        :states '(normal visual emacs)
+;;        prog-keys)
 (apply 'general-define-key :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
-       "C-j" '(cider-repl-forward-input :wk "Next Command")
-       "C-k" '(cider-repl-backward-input :wk "Previous Command")
-       cider-repl-normal)
+       (append '("" nil)
+               prog-keys
+               '("C-k" (cider-repl-backward-input :wk "Previous Command")
+                 "C-j" (cider-repl-forward-input :wk "Next Command"))))
 
 (general-define-key :states
                     '(normal visual emacs)
