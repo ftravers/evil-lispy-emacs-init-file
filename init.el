@@ -302,8 +302,8 @@ that."
   "
 ^Registers^    ^Edit Position^     ^Jump^
 -------------------------------------------
-_m_ mark point _k_: previous       _l_ to line
-_u_ jump to    _j_: next
+_m_ mark point _k_ previous        _l_ to line
+_u_ jump to    _j_ next
 _v_ view      
 "
   ("k" goto-last-change nil)
@@ -345,15 +345,24 @@ _v_ view
   ("q" nil "quit" :exit t :color pink))
 (defhydra hydra-cider-test ()
   "
-_p_ run test at point
-_n_ test all namespace
-_a_ all project tests
+TESTS
+^Run^                    ^Navigate Report^    ^Report^
+----------------------------------------------------------
+_p_ run test at point    _k_ prev result      _f_ re-run failed
+_n_ test all namespace   _j_ next result
+_a_ all project tests    _d_ goto definition
 _q_ quit
 "
   ("p" cider-test-run-test nil :exit t)
   ("n" cider-test-run-ns-tests nil :exit t)
   ("a" cider-test-run-project-tests nil :exit t)
-  ("q" nil :exit t))
+  ("k" cider-test-previous-result nil)
+  ("j" cider-test-next-result nil)
+  ("d" cider-test-jump :exit t)
+
+  ("f" cider-test-rerun-failed-tests nil)
+  ("q" nil nil :exit t))
+
 (defhydra hydra-cider-eval ()
   "
 EVAL
@@ -365,19 +374,7 @@ _q_ quit
   ("b" cider-eval-buffer nil :exit t)
   ("r" cider-eval-last-sexp-and-replace nil :exit t)
   ("p" eval-sexp-print-in-comment nil :exit t)
-  ("q" nil :exit t))
-(defhydra hydra-cider-test-report ()
-  "
-TESTS
-_k_ prev result
-_j_ next result
-_d_ goto definition
-_q_ quit
-"
-  ("k" cider-test-previous-result nil)
-  ("j" cider-test-next-result nil)
-  ("d" cider-test-jump :exit t)
-  ("q" nil :exit t))
+  ("q" nil nil :exit t))
 (defhydra hydra-prog-search ()
   "
 SEARCH
@@ -563,7 +560,7 @@ _q_ quit
                     "C-p" '(helm-show-kill-ring :wk "show kill ring")
                     "ESC" '(keyboard-escape-quit :wk "quit"))
 
-(apply 'general-define-key :prefix "," :keymaps '(clojure-mode-map)
+(apply 'general-define-key :prefix "," :keymaps '(clojure-mode-map cider-test-report-mode-map)
        :states '(normal visual emacs)
        cider-files-keyz)
 (apply 'general-define-key :prefix "," :keymaps '(cider-repl-mode-map)
