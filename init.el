@@ -33,6 +33,7 @@
 (use-package helm-ag)			; silver searcher for projects
 (use-package winum)                     ; switch between buffers using numbers
 (use-package magit) 			; git integration
+
 (use-package evil-magit)                ; vi bindings for magit
 (use-package helm-ag)                   ; silver searcher
 (use-package highlight-parentheses)     ; rainbow parens
@@ -90,9 +91,11 @@
       cider-eldoc-display-context-dependent-info t
       cider-overlays-use-font-lock t
       cider-prompt-for-symbol nil
+      cider-auto-select-test-report-buffer nil
+      cider-test-show-report-on-success nil
       cider-cljs-lein-repl "(do (use 'figwheel-sidecar.repl-api) (start-figwheel!) (cljs-repl))"
       show-paren-delay 0) 
-(cider-auto-test-mode 1)
+;; (cider-auto-test-mode 1)
 (set-face-background 'show-paren-match "#640000")
 (delight '((helm-mode) (emacs-lisp-mode)))
 (eval-after-load "undo-tree" '(diminish 'undo-tree-mode))
@@ -255,7 +258,6 @@ function call."
       (call-interactively #'eval-last-sexp)
     (self-insert-command 1)))
 
-
 (defun query-replace-symbol-at-point (inp)
   "jumps to top of file to start the replacing...eeek, dont like
 that."
@@ -276,7 +278,15 @@ that."
        (special-lispy-beginning-of-defun)
        (o-lispy))
 
-
+(defun repl-reload-ns ()
+  "Thin wrapper around `cider-test-run-tests'."
+  (interactive)
+  (when (cider-connected-p)
+    (let ((cider-auto-select-test-report-buffer nil)
+          (cider-test-show-report-on-success nil))
+      (cider-repl-set-ns
+       (cider-current-ns))
+      (cider-ns-reload))))
 ;; ============= Hooks ==============================
 
 ;; ============= HOOKS ==============================
@@ -352,13 +362,16 @@ TESTS
 ^Run^                    ^Navigate Report^    ^Report^
 ----------------------------------------------------------
 _p_ run test at point    _k_ prev result      _f_ re-run failed
-_n_ test all namespace   _j_ next result
-_a_ all project tests    _d_ goto definition
+_n_ test all namespace   _j_ next result      _s_ show report
+_a_ all project tests    _d_ goto definition  _h_ hide auto show report
 _q_ quit                 _e_ show error
 "
   ("p" cider-test-run-test nil :exit t)
   ("n" cider-test-run-ns-tests nil :exit t)
   ("a" cider-test-run-project-tests nil :exit t)
+  ("h" (lambda () (interactive)
+         (setq cider-auto-test-mode nil))
+   nil :exit t)
 
   ("k" cider-test-previous-result nil)
   ("j" cider-test-next-result nil)
@@ -366,6 +379,8 @@ _q_ quit                 _e_ show error
   ("e" cider-test-stacktrace nil)
   
   ("f" cider-test-rerun-failed-tests nil)
+  ("s" cider-test-show-report nil)
+  
   ("q" nil nil :exit t))
 (defhydra hydra-cider-eval ()
   "
@@ -480,7 +495,7 @@ _q_ quit
         "w3" (split-window-below-balance :wk "split horizontally")
         "w=" (balance-windows :wk "balance windows")
         "wt" (transpose-windows :wk "transpose windows")))
-(setq cider-common-keys
+(setq clj-common
       '("'" (cider-jack-in :wk "Cider Jack In")
         "\"" (cider-jack-in-cljs :wk "Cider Jack In CLJS")
         "." (cider-find-var :wk "find var")
@@ -495,23 +510,19 @@ _q_ quit
         "rd" (cider-debug-defun-at-point :wk "instrument fun at point for debugging")
         "ri" (cider-insert-last-sexp-in-repl :wk "insert sexp into repl")
         "rl" (cider-load-buffer :wk "Load Buffer")
-        "rn" ((lambda ()
-                (interactive)
-                (cider-repl-set-ns
-                 (cider-current-ns))
-                (cider-ns-reload))
-              :wk "load & set REPL ns")
+        "rn" (repl-reload-ns :wk "reload repl & run tests")
+        "rp" (eval-sexp-print-in-comment :wk "print result of prev sexp")
         "rq" (cider-quit :wk "REPL quit")
         "rs" (cider-jack-in-cljs :wk "Make cljscript REPL")))
-(setq cider-files-keys
+(setq clj
       (append
        '("jr" (cider-switch-to-repl-buffer :wk "goto REPL"))
-       cider-common-keys))
-(setq cider-repl-keys
+       clj-common))
+(setq clj-repl
       (append
        '("jr" (:wk "goto REPL")
          "jr" (cider-switch-to-last-clojure-buffer :wk "goto REPL"))
-       cider-common-keys))
+       clj-common))
 (setq cider-test-report-keys
       '(
         "k" cider-test-previous-result)
@@ -521,9 +532,6 @@ _q_ quit
 ;; we put "" nil at top of key defs that are going to get used by
 ;; general-define-key, but leave it out above where we mix and match
 ;; definitions.
-(setq cider-files-keyz (append '("" nil) cider-files-keys))
-(setq cider-repl-keyz (append '("" nil) cider-repl-keys))
-
 (setq insert-keys
       '("i" (evil-lispy-state :wk "insert -> lispy state")
         ;; "I" (I-lispy :wk "insert line -> lispy state")
@@ -536,30 +544,16 @@ _q_ quit
         "C-u" (universal-argument :wk "universal argument")
         "M-." (lispy-goto-symbol :wk "goto symbol")
         "M-," (pop-tag-mark :wk "pop from symbol")))
-(setq prog-keys
+(setq lisp-common
       (append insert-keys
               '("C-n" (evil-scroll-page-down :wk "down")
                 "C-p" (evil-scroll-page-up :wk "up")
-                "C-k" (lispy-kill-sentence :wk "kill")
                 "C-]" (end-of-parent-sexp : wk "end of sexp")
                 "q" (self-insert-command :wk "self insert"))))
-(setq cider-repl-normal (append '("" nil ) prog-keys))
-;; (setq prog-normal (append '("" nil) insert-keys))
 
-(apply 'general-define-key :keymaps '(prog-mode-map)
-       :states '(normal visual emacs)
-       prog-keys)
-;; (apply 'general-define-key :keymaps '(clojure-mode-map)
-;;        :states '(normal visual emacs)
-;;        prog-keys)
-(apply 'general-define-key :keymaps '(cider-repl-mode-map)
-       :states '(normal visual emacs)
-       (append '("" nil)
-               prog-keys
-               '("C-k" (cider-repl-backward-input :wk "Previous Command")
-                 "C-j" (cider-repl-forward-input :wk "Next Command"))))
-
-(general-define-key :states
+;; ============= GENERAL: keymaps / prefixes  =============
+(fset 'gdk 'general-define-key)
+(gdk :states ; normal, no-prefix, all keymaps
                     '(normal visual emacs)
                     "[" '(evil-lispy/enter-state-left :wk "enter lispy mode left")
                     "]" '(evil-lispy/enter-state-right :wk "enter lispy mode right")
@@ -567,14 +561,39 @@ _q_ quit
                     "q" '(cider-popup-buffer-quit-function :wk "quit")
                     "C-p" '(helm-show-kill-ring :wk "show kill ring")
                     "ESC" '(keyboard-escape-quit :wk "quit"))
-
-(apply 'general-define-key :prefix "," :keymaps '(clojure-mode-map cider-test-report-mode-map)
+(apply 'gdk :keymaps '(emacs-lisp-mode-map) ; normal, no-prefix
        :states '(normal visual emacs)
-       cider-files-keyz)
-(apply 'general-define-key :prefix "," :keymaps '(cider-repl-mode-map)
+        ;; "1" (winum-select-window-1 :wk "move window 1")
+        ;; (append '("C-k" (lispy-kill-sentence :wk "kill"))
+       (append '("" nil)
+               '("C-k" (lispy-kill-sentence :wk "kill"))
+               lisp-common
+               ))
+(apply 'gdk :keymaps '(clojure-mode-map) ; normal, no-prefix
        :states '(normal visual emacs)
-       cider-repl-keyz)
-(apply 'general-define-key :prefix "SPC"
+        ;; "1" (winum-select-window-1 :wk "move window 1")
+        ;; (append '("C-k" (lispy-kill-sentence :wk "kill"))
+       (append '("" nil)
+               '("C-k" (lispy-kill-sentence :wk "kill"))
+               lisp-common
+               ))
+(apply 'gdk :prefix "," :keymaps '(clojure-mode-map)
+       :states '(normal visual emacs)
+       (append '("" nil) clj))
+(apply 'gdk :keymaps '(cider-repl-mode-map) ; normal/input, no-prefix
+       :states '(normal visual emacs input)
+       (append '("" nil)
+               '("C-k" nil) ;; cannot get "C-k" unbound :(
+               '("C-k" (cider-repl-backward-input :wk "Previous Command")
+                 "C-j" (cider-repl-forward-input :wk "Next Command"))
+               lisp-common))
+(apply 'gdk :prefix "," :keymaps '(cider-test-report-mode-map)
+       :states '(normal visual emacs)
+       (append '("" nil) clj))
+(apply 'gdk :prefix "," :keymaps '(cider-repl-mode-map)
+       :states '(normal visual emacs)
+       (append '("" nil) clj-repl))
+(apply 'gdk :prefix "SPC" ; obscure keymaps
        :keymaps
        '(magit-status-mode-map
          magit-revision-mode-map
@@ -583,7 +602,7 @@ _q_ quit
          magit-log-mode-map)
        :states '(normal visual emacs)
        normal-spc)
-(apply 'general-define-key :prefix "SPC"
+(apply 'gdk :prefix "SPC" ; all-keymaps
        :states '(normal visual emacs motion)
        normal-spc)  
 (general-def org-mode-map "C-'" 'org-edit-special)
@@ -638,7 +657,14 @@ _q_ quit
 ;;   "A" #'lispy-ace-symbol-replace)
 (general-def clojure-mode-map "e" 'e-clojure)
 (general-def emacs-lisp-mode-map "e" 'e-lisp)
+;; (apply 'gdk :keymaps '(prog-mode-map)
+;;        :states '(normal visual emacs)
+;;        ;; (append '("C-k" (lispy-kill-sentence :wk "kill"))
+;;        ;;         prog-keys)
+;;        prog-keys)
 
+
+;; =======================================================
 (eval-after-load "lispy"
   `(progn
      (my-remove-lispy-key (kbd "C-,"))
