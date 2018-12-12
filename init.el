@@ -273,11 +273,14 @@ that."
   (let ((symb-at-pt (thing-at-point 'symbol)))
     (search-forward symb-at-pt)))
 
-(defun end-of-parent-sexp () (interactive)
-       (evil-lispy/enter-state-left)
-       (special-lispy-beginning-of-defun)
-       (o-lispy))
-
+(defun end-of-parent-sexp ()
+  (interactive)
+  (evil-lispy/enter-state-left)
+  (special-lispy-beginning-of-defun)
+  (o-lispy))
+(defun first-open-paren ()
+  (interactive)
+  (search-forward "("))
 (defun repl-reload-ns ()
   "Thin wrapper around `cider-test-run-tests'."
   (interactive)
@@ -311,26 +314,6 @@ that."
             (eldoc-mode)))
  
 ;; ============= HYDRAS ===============================
-(defhydra hydra-jump ()
-  "
-^Registers^ | ^Jump^
-----------|-----------
-_m_ mark pt   _k_ prev
-_u_ jump to   _j_ next
-_v_ view      _l_ to line
-"
-  ("k" goto-last-change nil)
-  ("j" goto-last-change-reverse nil)
-
-  ("b" hydra-buffers/body ">BUFFERS<" :exit t)
-
-  ("m" point-to-register nil :exit t)
-  ("u" jump-to-register nil :exit t)
-  ("v" view-register nil :exit t)
-
-  ("l" avy-goto-line nil :exit t)
-
-  ("q" nil "quit" :exit t :color pink)) 
 (defhydra hydra-prog-search ()
   "
 ^Registers^ |  ^Jump^  |  ^Search^    |  ^Replace^   |  ^Quit^ 
@@ -418,6 +401,9 @@ _q_ quit
   ("p" eval-sexp-print-in-comment nil :exit t)
   ("q" nil nil :exit t))
 
+(defhydra hydra-lisp-movement ()
+  "_a_ begin of defun"
+  ("a" beginning-of-defun nil :exit t))
 ;; ============= General: Key Defs  ==============
 (setq comma-cloj-common
       '("'" (cider-jack-in :wk "Cider Jack In")
@@ -447,22 +433,21 @@ _q_ quit
          "a" (a-lispy :wk "append -> lispy state")
          "A" (A-lispy :wk "append line -> lispy state")
          ";" (lispy-comment :wk "lispy comment")
-         "," (hydra-prog-comma/body :wk ">>>Search<<<")
+         ;; "," (hydra-lisp-movement/body :wk ">>>Movement<<<")
          "C-u" (universal-argument :wk "universal argument")
          "M-." (lispy-goto-symbol :wk "goto symbol")
          "M-," (pop-tag-mark :wk "pop from symbol")
          "C-n" (evil-scroll-page-down :wk "down")
          "C-k" (lispy-kill-sentence :wk "kill sentence")
          "C-p" (evil-scroll-page-up :wk "up")
-         "C-]" (end-of-parent-sexp : wk "end of sexp")
+         ;; "C-]" (end-of-parent-sexp :wk "end of sexp")
+         ;; "C-[" (beginning-of-defun :wk "beginning of defun")
          "q" (self-insert-command :wk "self insert"))))
 (setq spc-kz
       '("" nil
         "f" (:ignore t :wk "Files")
         "b" (hydra-buffers/body :wk ">BUFFERS<")
         "g" (:ignore t :wk "Magit")
-        "i" (:ignore t :wk "Fill")
-        "j" (hydra-jump/body :wk ">JUMP<")
         "o" (:ignore t :wk "Fold")
         "p" (:ignore t :wk "Projects")
         "s" (hydra-prog-search/body :wk "Search")
@@ -480,22 +465,13 @@ _q_ quit
         "," (xref-pop-marker-stack :wk "pop back")
         "e" (eval-buffer :wk "elisp eval buffer")
 
-        ;; "bb" (helm-mini :wk "buffer list")
-        ;; "bd" (kill-this-buffer :wk "kill buffer")
-        ;; "bt" (transpose-windows :wk "transpose windows")
-        ;; "bs" (:ignore t :wk "Buffer Save")
-        ;; "bss" (save-buffer :wk "save this buffer")
-        ;; "bsa" (save-some-buffers :wk "save all buffers")
-
         "ff" (helm-find-files :wk "Find Files")
-        "fed" (ffs "/home/fenton/.emacs.d/init.el" :wk "open init.el")
+        ;; "fed" (ffs "/home/fenton/.emacs.d/init.el" :wk "open init.el")
 
         "gs" (magit-status :wk "magit status")
         "gb" (:ignore t :wk "Magit Blame")
         "gbb" (magit-blame :wk "magit blame")
         "gbq" (magit-blame-quit :wk "magit blame quit")
-
-        "ip" (fill-paragraph :wk "fill paragraph")
 
         "os" (hs-show-all :wk "show all")
         "oh" (hs-hide-all :wk "hide all")
@@ -507,12 +483,6 @@ _q_ quit
 
         "qq" (save-buffers-kill-terminal :wk "Emacs Quit")
 
-        "rm" (point-to-register :wk "set current point to register")
-        "rj" (jump-to-register :wk "jump to register")
-        "rv" (view-register :wk "view registers")
-        "rn" (goto-last-change :wk "goto last change in buffer")
-        "rp" (goto-last-change-reverse :wk "goto last change in buffer - reverse")
-        
         "wd" (delete-window-balance :wk "delete window")
         "w0" (delete-window-balance :wk "delete window")
         "wm" (delete-other-windows :wk "maximize window")
@@ -567,7 +537,7 @@ _q_ quit
                '("C-k" nil) ;; cannot get "C-k" unbound :(
                '("C-k" (cider-repl-backward-input :wk "Previous Command")
                  "C-j" (cider-repl-forward-input :wk "Next Command"))
-               clojure-noprefix))  
+               none-lisp))  
 (general-def org-mode-map "C-'" 'org-edit-special)
 (general-def org-src-mode-map "C-'" 'org-edit-src-abort)
 ;; ==> Prefix: SPC......State: Normal
@@ -587,6 +557,7 @@ _q_ quit
 (apply 'gdk :prefix "," :keymaps '(clojure-mode-map cider-test-report-mode-map)
        :states '(normal visual emacs)
        (append '("" nil) comma-cloj))
+
 
 ;; =======================================================
 (eval-after-load "lispy"
