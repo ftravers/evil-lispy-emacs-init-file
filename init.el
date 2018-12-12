@@ -331,6 +331,21 @@ _v_ view
   ("l" avy-goto-line nil :exit t)
 
   ("q" nil "quit" :exit t :color pink))
+(defhydra hydra-prog-search ()
+  "
+^Search^         ^Replace^
+--------------------------------------
+_s_ symb @pt   _r_ replace symb @pt
+_j_ srch up 
+_k_ srch down
+
+_q_ stop searching
+"
+  ("s" isearch-forward-symbol-at-point nil)
+  ("j" isearch-repeat-forward nil)
+  ("k" isearch-repeat-backward nil)
+  ("r" query-replace-symbol-at-point nil :exit t)
+  ("q" isearch-exit nil :exit t))
 (defhydra hydra-buffers ()
   "
  ^Goto^    ^^^       BUFFERS ^^^
@@ -394,38 +409,8 @@ _q_ quit
   ("r" cider-eval-last-sexp-and-replace nil :exit t)
   ("p" eval-sexp-print-in-comment nil :exit t)
   ("q" nil nil :exit t))
-(defhydra hydra-prog-search ()
-  "
-SEARCH
-_s_ symbol @pt
-_j_ repeat search symbol forward 
-_k_ repeat search symbol backward
-_q_ stop searching
-"
-  ("s" isearch-forward-symbol-at-point nil)
-  ("j" isearch-repeat-forward nil)
-  ("k" isearch-repeat-backward nil)
-  ("q" isearch-exit nil :exit t))
-(defhydra hydra-prog-replace ()
-  "
-REPLACE
-_r_ query replace symbol @pt
-_q_ stop searching
-"
-  ("r" query-replace-symbol-at-point nil :exit t)
-  ("q" nil "quit" :exit t))
-(defhydra hydra-prog-comma ()
-  "
-REPLACE
-_r_ >REPLACE<
-_s_ >SEARCH<
-_q_ quit
-"
-  ("r" hydra-prog-replace/body :exit t)
-  ("s" hydra-prog-search/body :exit t)
-  ("q" nil "quit" :exit t))
 
-;; ============= GENERAL ==============================
+;; ============= General: Key Defs  ==============
 (setq clj-common
       '("'" (cider-jack-in :wk "Cider Jack In")
         "\"" (cider-jack-in-cljs :wk "Cider Jack In CLJS")
@@ -459,6 +444,7 @@ _q_ quit
          "M-." (lispy-goto-symbol :wk "goto symbol")
          "M-," (pop-tag-mark :wk "pop from symbol")
          "C-n" (evil-scroll-page-down :wk "down")
+         "C-k" (lispy-kill-sentence :wk "kill sentence")
          "C-p" (evil-scroll-page-up :wk "up")
          "C-]" (end-of-parent-sexp : wk "end of sexp")
          "q" (self-insert-command :wk "self insert"))))
@@ -471,7 +457,7 @@ _q_ quit
         "j" (hydra-jump/body :wk ">JUMP<")
         "o" (:ignore t :wk "Fold")
         "p" (:ignore t :wk "Projects")
-        "s" (:ignore t :wk "Search")
+        "s" (hydra-prog-search/body :wk "Search")
         "w" (:ignore t :wk "Window")
         "q" (:ignore t :wk "Quit")
 
@@ -519,8 +505,6 @@ _q_ quit
         "rn" (goto-last-change :wk "goto last change in buffer")
         "rp" (goto-last-change-reverse :wk "goto last change in buffer - reverse")
         
-        "sr" (query-replace :wk "query replace")
-
         "wd" (delete-window-balance :wk "delete window")
         "w0" (delete-window-balance :wk "delete window")
         "wm" (delete-other-windows :wk "maximize window")
@@ -547,17 +531,16 @@ _q_ quit
   ;; ("d" cider-test-jump :exit t)
       )
 
-;; we put "" nil at top of key defs that are going to get used by
-;; general-define-key, but leave it out above where we mix and match
-;; definitions.
+;; ============= General: Aliases =============
 (defvaralias 'elisp-noprefix 'lisp-common)
 (defvaralias 'clojure-noprefix 'lisp-common)
-
-;; ============= GENERAL: keymaps / prefixes  =============
 (fset 'gdk 'general-define-key)
 
-;; ==> NO prefix
-(gdk :states ; normal, no-prefix, all keymaps
+;; ============= General: keymaps & prefixes  =============
+;; ==> Prefix: None
+;; ---------> State: None
+;; ? below shouldn't we remove :states???
+(gdk :states ; all keymaps
                     '(normal visual emacs)
                     "[" '(evil-lispy/enter-state-left :wk "enter lispy mode left")
                     "]" '(evil-lispy/enter-state-right :wk "enter lispy mode right")
@@ -565,25 +548,21 @@ _q_ quit
                     "q" '(cider-popup-buffer-quit-function :wk "quit")
                     "C-p" '(helm-show-kill-ring :wk "show kill ring")
                     "ESC" '(keyboard-escape-quit :wk "quit"))
-(apply 'gdk :keymaps '(clojure-mode-map) ; normal, clojure-noprefix
-       :states '(normal visual emacs)
-       ;; "1" (winum-select-window-1 :wk "move window 1")
-       ;; (append '("C-k" (lispy-kill-sentence :wk "kill"))
+(apply 'gdk :keymaps '(emacs-lisp-mode-map)
        (append '("" nil)
-               '("C-k" (lispy-kill-sentence :wk "kill")
-                 "e" (e-clojure :wk "clojure eval"))
-               clojure-noprefix))
-;; (general-def clojure-mode-map "e" 'e-clojure)
-;; (general-def emacs-lisp-mode-map "e" 'e-lisp)
-(apply 'gdk :keymaps '(emacs-lisp-mode-map) ; normal, elisp-noprefix
-       :states '(normal visual emacs)
-       ;; "1" (winum-select-window-1 :wk "move window 1")
-       ;; (append '("C-k" (lispy-kill-sentence :wk "kill"))
+               '("e" (e-lisp :wk "elisp eval"))))
+(apply 'gdk :keymaps '(clojure-mode-map)
        (append '("" nil)
-               '("C-k" (lispy-kill-sentence :wk "kill")
-                 "e" (e-lisp :wk "elisp eval"))
-               elisp-noprefix))
-(apply 'gdk :keymaps '(cider-repl-mode-map) ; normal/input, clojure-noprefix
+               '("e" (e-clojure :wk "cider eval"))))
+;; ---------> State: Normal
+(apply 'gdk :keymaps '(clojure-mode-map)
+       :states '(normal visual emacs)
+       (append '("" nil) clojure-noprefix))
+(apply 'gdk :keymaps '(emacs-lisp-mode-map)
+       :states '(normal visual emacs)
+       (append '("" nil) elisp-noprefix))
+;; ---------> State: Normal & Input
+(apply 'gdk :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs input)
        (append '("" nil)
                '("C-k" nil) ;; cannot get "C-k" unbound :(
@@ -592,12 +571,11 @@ _q_ quit
                clojure-noprefix))  
 (general-def org-mode-map "C-'" 'org-edit-special)
 (general-def org-src-mode-map "C-'" 'org-edit-src-abort)
-
-;; ==> SPC prefix
-(apply 'gdk :prefix "SPC" ; all-keymaps, normal-spc
+;; ==> Prefix: SPC      State: normal
+(apply 'gdk :prefix "SPC" ; all-keymaps
        :states '(normal visual emacs motion)
        normal-spc)
-(apply 'gdk :prefix "SPC" ; obscure keymaps, normal-spc
+(apply 'gdk :prefix "SPC" ; obscure keymaps
        :keymaps
        '(magit-status-mode-map
          magit-revision-mode-map
@@ -606,73 +584,16 @@ _q_ quit
          magit-log-mode-map)
        :states '(normal visual emacs)
        normal-spc)
-
-;; ==> COMMA prefix
-(apply 'gdk :prefix "," :keymaps '(clojure-mode-map)
-       :states '(normal visual emacs)
-       (append '("" nil) clj-comma))
-(apply 'gdk :prefix "," :keymaps '(cider-test-report-mode-map)
+;; ==> Prefix: COMMA    State: Normal
+(apply 'gdk :prefix "," :keymaps '(clojure-mode-map cider-test-report-mode-map)
        :states '(normal visual emacs)
        (append '("" nil) clj-comma))
 (apply 'gdk :prefix "," :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
        (append '("" nil) clj-repl-comma))
 
-;; (general-def emacs-lisp-mode-map "C-'" 'org-edit-src-abort)
-(general-def magit-hunk-section-map ; not really working...?
-  "-" 'magit-diff-less-context         
-  "+" 'magit-diff-more-context)
-;; (general-def cider-test-report-map "b" 'hydra-buffers/body)
-;; (apply 'general-define-key :keymaps '(cider-test-report-mode-map)
-;;                     :states '(normal visual emacs)
-;;                     "" nil
-;;                     "b" 'hydra-buffers/body)
-;; (apply 'general-define-key :keymaps '(emacs-lisp-mode-map)
-;;                     :states '(normal visual emacs)
-;;                     "" nil
-;;                     "b" 'hydra-buffers/body)
-
-;; ============= LISPY ==============================
-;; (general-def lispy-mode-map
-;;   :definer 'lispy
-;;   "y" #'lispy-new-copy                  ; lose lispy-occur -> /
-;;   ;; swap p and P
-;;   "p" #'lispy-paste
-;;   "P" #'lispy-eval-other-window
-;;   "d" #'noct:lispy-delete               ; lose lispy-different -> o
-;;   ;; like in visual state
-;;   "o" #'lispy-different                 ; lose lispy-other-mode (don't use)
-;;   "/" #'lispy-occur                     ; lose lispy-splice -> x
-;;   "x" #'lispy-splice                    ; lose lispy-x -> c
-;;   ;; "change" works as a mnemonic for some of these actions (e.g. change to
-;;   ;; cond, change to if, change to defun, and change to lambda; there's not
-;;   ;; really a common theme for the other actions)
-;;   "c" #'lispy-x                         ; lose lispy-clone -> q
-;;   "f" #'lispy-ace-paren                 ; lose lispy-flow -> n
-;;   ;; maybe
-;;   "F" #'lispy-ace-char                  ; lose lispy-follow -> ???
-;;   ;; or this
-;;   "t" #'lispy-ace-char                  ; lose lispy-teleport -> ???
-;;   ;; kind of like repeating a search
-;;   "n" #'lispy-flow
-;;   ;; I don't have a good mnemonic for this other than that q sounds vaguely
-;;   ;; similar to c
-;;   "q" #'lispy-clone
-;;   ;; swap m and v
-;;   "v" #'lispy-mark-list
-;;   "m" #'lispy-view)
-
-;;   ;; extra not-vimmy personal configuration
-;;   ;; swap H and A; makes more sense given default h and a
-;;   "H" #'lispy-beginning-of-defun
-;;   "A" #'lispy-ace-symbol-replace)
-
-;; (apply 'gdk :keymaps '(prog-mode-map)
-;;        :states '(normal visual emacs)
-;;        ;; (append '("C-k" (lispy-kill-sentence :wk "kill"))
-;;        ;;         prog-keys)
-;;        prog-keys)
-
+;; (general-def clojure-mode-map "e" 'e-clojure)
+;; (general-def emacs-lisp-mode-map "e" 'e-lisp)
 
 ;; =======================================================
 (eval-after-load "lispy"
@@ -688,10 +609,7 @@ _q_ quit
      (lispy-define-key lispy-mode-map (kbd "f") 'special-lispy-flow)
      (lispy-define-key lispy-mode-map (kbd "i") 'special-lispy-tab)
      (lispy-define-key lispy-mode-map (kbd ":") 'evil-ex)
-     ;; (lispy-define-key lispy-mode-map (kbd "e") 'cider-eval-last-sexp)
-     ;; (lispy-define-key lispy-mode-map (kbd "e") 'special-lispy-eval)
      (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex)
-     ;; (lispy-define-key lispy-mode-map (kbd ",") 'in-lispy)
      ))
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
