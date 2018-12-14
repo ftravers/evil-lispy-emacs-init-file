@@ -33,7 +33,6 @@
 (use-package helm-ag)			; silver searcher for projects
 (use-package winum)                     ; switch between buffers using numbers
 (use-package magit) 			; git integration
-
 (use-package evil-magit)                ; vi bindings for magit
 (use-package helm-ag)                   ; silver searcher
 (use-package highlight-parentheses)     ; rainbow parens
@@ -50,6 +49,8 @@
 (require 'clomacs)
 (use-package ivy)
 (require 'thingatpt)
+(use-package auto-complete)
+(use-package evil-surround :ensure t :config (global-evil-surround-mode 1))
 ;; (use-package cl)
 
 ;; ============= Simple Config ====================
@@ -177,7 +178,8 @@
 (defun lispy-parens-from-normal ()
   (interactive)
   (evil-lispy-state)
-  (lispy-parens))
+  (lispy-parens)
+  (call-interactively #'evil-lispy/enter-state-left))
 
 (defun load-ns-goto-repl ()
   "Since cider-load-buffer is already an interactive function
@@ -265,22 +267,52 @@ that."
    (let ((symb-at-pt (thing-at-point 'symbol)))
      (list (read-string (format "Replace %s with: " symb-at-pt) nil 'my-history))))
   (let ((symb-at-pt (thing-at-point 'symbol)))
-    (query-replace symb-at-pt inp t (line-beginning-position)  (point-max))))
+    (query-replace symb-at-pt inp t (line-beginning-position) (point-max))))
+(defun at-beginning-of-line-p ()
+  (interactive)
+  (= (point) (line-beginning-position)))
+(defun eval-sexp-or-buffer ()
+  (interactive)
+  (if (at-beginning-of-line-p)
+      (eval-buffer)
 
-(defun forward-search-symbol-at-point ()
+    (call-interactively #'eval-defun)))
+(defun current-line-empty-p ()
+  (save-excursion
+    (beginning-of-line)
+    (looking-at "[[:space:]]*$")))
+(defun insert-space-around-sexp ()
+  (interactive)
+  ;; (save-excursion
+  ;;   (beginning-of-defun)
+  ;;   (forward-line -1)
+  ;;   (if (not (current-line-empty-p))
+  ;;       (progn
+  ;;         (forward-line 1)
+  ;;         (open-line 1))
+  ;;     (forward-line 1)))
+  (save-excursion
+    (end-of-defun)
+    (if (not (current-line-empty-p))
+        (progn
+          (open-line 1)))))
+(defun forward-search-syombol-at-point ()
+
   "search forward the symbol at point"
   (interactive)
   (let ((symb-at-pt (thing-at-point 'symbol)))
     (search-forward symb-at-pt)))
-
 (defun end-of-parent-sexp ()
   (interactive)
   (evil-lispy/enter-state-left)
   (special-lispy-beginning-of-defun)
   (o-lispy))
+
 (defun first-open-paren ()
   (interactive)
-  (search-forward "("))
+  (search-forward "(")
+  (backward-char)
+  (call-interactively #'evil-lispy/enter-state-left))
 (defun repl-reload-ns ()
   "Thin wrapper around `cider-test-run-tests'."
   (interactive)
@@ -290,6 +322,7 @@ that."
       (cider-repl-set-ns
        (cider-current-ns))
       (cider-ns-reload))))
+
 ;; ============= Hooks ==============================
 
 ;; ============= HOOKS ==============================
@@ -316,25 +349,28 @@ that."
 ;; ============= HYDRAS ===============================
 (defhydra hydra-prog-search ()
   "
-^Registers^ |  ^Jump^  |  ^Search^    |  ^Replace^   |  ^Quit^ 
-----------|--------|------------|------------|-------
-_m_ mark pt   _k_ prev   _s_ symb @pt   _r_ symb @pt   _q_ quit
-_u_ jump to   _j_ next   _j_ up 
-_v_ view      _l_ line   _k_ down
+^Registers^ |  ^Edit Pos^  |  ^Search^    |  ^Replace^   |  ^Quit^ 
+----------|------------|------------|------------|-------
+_m_ mark pt   _k_ prev   _y_ symb @pt   _r_ symb @pt   _q_ quit
+_u_ jump to   _j_ next   _p_ up 
+_v_ view      _l_ line   _n_ down
+_s_ srch regx
 "
-  ("k" goto-last-change nil)
-  ("j" goto-last-change-reverse nil)
-
-  ("b" hydra-buffers/body ">BUFFERS<" :exit t)
-
   ("m" point-to-register nil :exit t)
   ("u" jump-to-register nil :exit t)
   ("v" view-register nil :exit t)
 
+  ("k" goto-last-change nil)
+  ("j" goto-last-change-reverse nil)
   ("l" avy-goto-line nil :exit t)
-  ("s" isearch-forward-symbol-at-point nil)
-  ("j" isearch-repeat-forward nil)
-  ("k" isearch-repeat-backward nil)
+
+  ("b" hydra-buffers/body ">BUFFERS<" :exit t)
+
+  ("y" isearch-forward-symbol-at-point nil)
+  ("p" isearch-repeat-backward nil)
+  ("n" isearch-repeat-forward nil)
+  ("s" isearch-forward nil :exit t)
+
   ("r" query-replace-symbol-at-point nil :exit t)
   ("q" isearch-exit nil :exit t)) 
 (defhydra hydra-buffers ()
@@ -400,10 +436,13 @@ _q_ quit
   ("r" cider-eval-last-sexp-and-replace nil :exit t)
   ("p" eval-sexp-print-in-comment nil :exit t)
   ("q" nil nil :exit t))
-
 (defhydra hydra-lisp-movement ()
-  "_a_ begin of defun"
-  ("a" beginning-of-defun nil :exit t))
+  "move"
+  ("a" beginning-of-defun "begin of defun" :exit t))
+(defhydra hydra-lisp-comma ()
+  "lisp actions"
+  ("o" insert-space-around-sexp "insert space around sexp"  :exit t)
+  ("[" first-open-paren "begin of defun to right" :exit t))
 ;; ============= General: Key Defs  ==============
 (setq comma-cloj-common
       '("'" (cider-jack-in :wk "Cider Jack In")
@@ -433,7 +472,7 @@ _q_ quit
          "a" (a-lispy :wk "append -> lispy state")
          "A" (A-lispy :wk "append line -> lispy state")
          ";" (lispy-comment :wk "lispy comment")
-         ;; "," (hydra-lisp-movement/body :wk ">>>Movement<<<")
+         "," (hydra-lisp-comma/body :wk ">>>Movement<<<")
          "C-u" (universal-argument :wk "universal argument")
          "M-." (lispy-goto-symbol :wk "goto symbol")
          "M-," (pop-tag-mark :wk "pop from symbol")
@@ -441,7 +480,7 @@ _q_ quit
          "C-k" (lispy-kill-sentence :wk "kill sentence")
          "C-p" (evil-scroll-page-up :wk "up")
          ;; "C-]" (end-of-parent-sexp :wk "end of sexp")
-         ;; "C-[" (beginning-of-defun :wk "beginning of defun")
+         ;; "C-[" (first-open-paren :wk "beginning of defun")
          "q" (self-insert-command :wk "self insert"))))
 (setq spc-kz
       '("" nil
@@ -463,7 +502,7 @@ _q_ quit
         "SPC" (helm-M-x :wk "run command")
         "." (lispy-goto-symbol :wk "find definition")
         "," (xref-pop-marker-stack :wk "pop back")
-        "e" (eval-buffer :wk "elisp eval buffer")
+        "e" (eval-sexp-or-buffer :wk "elisp eval buffer")
 
         "ff" (helm-find-files :wk "Find Files")
         ;; "fed" (ffs "/home/fenton/.emacs.d/init.el" :wk "open init.el")
@@ -582,7 +621,7 @@ _q_ quit
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move))))
+    (evil-surround auto-complete cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
