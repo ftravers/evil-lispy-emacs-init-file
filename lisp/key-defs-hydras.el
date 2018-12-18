@@ -67,8 +67,8 @@ _0_ to top level
   ("k" backward-parent-sexp nil)
   ("j" forward-parent-sexp nil)
   ("[" first-open-paren nil :exit t)
-  ("0" goto-top-level-sexp nil)
-
+  ("0" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state))  nil)
+   
   ("o" insert-space-around-sexp nil)
 
   ("d" edebug-defun nil :exit t)
@@ -91,7 +91,7 @@ _l_ load buffer  _[_ to open paren
   ("j" forward-parent-sexp nil)
   ("k" backward-parent-sexp nil)
   ("[" first-open-paren nil :exit t)
-  ("0" goto-top-level-sexp nil)
+  ("0" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state))  nil)
 
   ("i" cider-insert-last-sexp-in-repl nil :exit t)
   ("r" hydra-cloj-comma-r/body "+REPL+" :exit t)

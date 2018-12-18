@@ -201,7 +201,6 @@ that."
   (interactive)
   (call-interactively #'cider-load-buffer)
   (call-interactively #'repl-reload-ns))
-
 ;; write a defun that opens the corresponding test file
 ;; clojure-find-ns -> reports the current clojure buffer ns
 (defun open-test-file ()
@@ -223,30 +222,25 @@ that."
        (file-extension (file-name-extension (buffer-file-name)))
        (impl-file (concat (projectile-project-root) "src/" no-dot-ns "." file-extension)))
     (find-file impl-file)))
-
 (defun get-curr-function-name ()
   (save-excursion
     (goto-top-level-sexp)
     (forward-word)
     (forward-char)
     (thing-at-point 'symbol)))
-
 (defun remove-test-suffix (test-name)
   (replace-regexp-in-string
    "-[^-]*-test"
    "" test-name))
-
-(defun gcfni ()
-  (interactive)
-  (message "curr func: %s" (get-curr-function-name)))
-
+;; (defun gcfni ()
+;;   (interactive)
+;;   (message "curr func: %s" (get-curr-function-name)))
 (defun go-to-test-function ()
   (interactive)
   (let ((curr-fn-name (get-curr-function-name)))
     (open-test-file)
     (goto-char (point-min))
     (search-forward (concat "deftest " curr-fn-name))))
-
 (defun go-to-impl-function ()
   (interactive)
   (let* ((curr-fn-name (get-curr-function-name))
