@@ -1,4 +1,3 @@
-
 ;; ============= HYDRAS ===============================
 ;; ^Registers^  
  ;; _m_ mark pt
@@ -53,9 +52,7 @@ _n_ down    _s_ search   _l_ line
   ("4" winum-select-window-4 nil :exit t)
 
   ("q" nil "quit" :exit t :color pink))
-(defhydra hydra-lisp-movement ()
-  "move"
-  ("a" beginning-of-defun "begin of defun" :exit t))
+
 (defhydra hydra-elisp-comma ()
   "
 ^SEXP MOVEMENT^    ^SEXP FORMAT^      ^MISC^
@@ -124,6 +121,12 @@ _a_ all project tests    _d_ goto definition  _h_ hide auto show report
   ("s" cider-test-show-report nil)
   
   ("q" nil "quit" :exit t))
+(defhydra hydra-repl-comma ()
+  "
+_r_ goto cloj buffer
+"
+  ("r" cider-switch-to-last-clojure-buffer nil :exit t)
+  ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-comma-r ()
   "
 ^REPL^         ^SEXP^  
@@ -138,12 +141,6 @@ _k_ kill
   ("l" cider-insert-last-sexp-in-repl nil :exit t)
   ("p" eval-sexp-print-in-comment nil :exit t)
 
-  ("q" nil "quit" :exit t))
-(defhydra hydra-repl-comma ()
-  "
-_r_ goto cloj buffer
-"
-  ("r" cider-switch-to-last-clojure-buffer nil :exit t)
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-comma-t ()
   "
@@ -364,3 +361,4 @@ _r_ test report
 ;;   ("r" cider-eval-last-sexp-and-replace nil :exit t)
 ;;   ("p" eval-sexp-print-in-comment nil :exit t)
 ;;   ("q" nil nil :exit t))
+;; 
