@@ -144,14 +144,17 @@ _k_ kill
 _t_ test file  _p_ run project
 _i_ impl file  _n_ run ns
 _f_ test func
+_u_ impl func
 _r_ test report
 "
   ("t" open-test-file nil :exit t)
   ("i" open-implementation-file nil :exit t)
   ("f" go-to-test-function nil :exit t)
+  ("u" go-to-impl-function nil :exit t)
+  ("r" cider-test-show-report nil :exit t)
+
   ("p" cider-test-run-project-tests nil :exit t)
-  ("n" cider-test-run-ns-tests nil :exit t)
-  ("r" cider-test-show-report nil :exit t))
+  ("n" cider-test-run-ns-tests nil :exit t))
 
 ;; ============= General: Key Defs  ==============
 (setq none-any-all

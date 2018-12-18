@@ -232,19 +232,28 @@ that."
   (replace-regexp-in-string
    "-[^-]*-test"
    "" test-name))
-;; (defun gcfni ()
-;;   (interactive)
-;;   (message "curr func: %s" (get-curr-function-name)))
 (defun go-to-test-function ()
+  "go to test definition file and goto first test that tests the
+function that you are currently in/on.  test functions should be
+named <function-under-test-name>-<some number>-test"
   (interactive)
   (let ((curr-fn-name (get-curr-function-name)))
     (open-test-file)
     (goto-char (point-min))
     (search-forward (concat "deftest " curr-fn-name))))
 (defun go-to-impl-function ()
+  "when you are in a test function that is named appropriately,
+find the corresponding function that this test is testing.  test
+functions should be named <function-under-test-name>-<some
+number>-test"
   (interactive)
   (let* ((curr-fn-name (get-curr-function-name))
-         (curr-fn-name-no-suffic (remove-test-suffix curr-fn-name)))
-    (open-impl-file)
+         (curr-fn-name-no-suffix (remove-test-suffix curr-fn-name)))
+    (open-implementation-file)
     (goto-char (point-min))
-    (search-forward (concat "deftest " curr-fn-name))))
+    (search-forward (concat "defn " curr-fn-name-no-suffix))))
+(defun in-test-file-p ()
+  "true/false predicate if in a test file."
+  (let ((pref (concat (projectile-project-root) "test/"))
+        (buf (buffer-file-name)))
+    (string-prefix-p pref buf)))
