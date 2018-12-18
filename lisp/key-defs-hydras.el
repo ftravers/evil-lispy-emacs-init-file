@@ -41,39 +41,12 @@ _l_ load buffer  _[_ to open paren
   ("t" hydra-cloj-comma-t/body "+TESTS+" :exit t)
 
   ("q" nil "quit" :exit t))
-(defhydra hydra-cider-test-comma ()
-  "
-TESTS
-^Run^                    ^Navigate Report^    ^Report^
-----------------------------------------------------------
-_p_ run test at point    _k_ prev result      _f_ re-run failed
-_n_ test all namespace   _j_ next result      _s_ show report
-_a_ all project tests    _d_ goto definition  _h_ hide auto show report
-^^                       _e_ show error
-"
-  ("p" cider-test-run-test nil :exit t)
-  ("n" cider-test-run-ns-tests nil :exit t)
-  ("a" cider-test-run-project-tests nil :exit t)
-  ("h" (lambda () (interactive)
-         (setq cider-auto-test-mode nil))
-   nil :exit t)
-
-  ("k" cider-test-previous-result nil)
-  ("j" cider-test-next-result nil)
-  ("d" cider-test-jump :exit t)
-  ("e" cider-test-stacktrace nil)
-  
-  ("f" cider-test-rerun-failed-tests nil)
-  ("s" cider-test-show-report nil)
-  
-  ("q" nil "quit" :exit t))
 (defhydra hydra-repl-comma ()
   "
 _r_ goto cloj buffer
 "
   ("r" cider-switch-to-last-clojure-buffer nil :exit t)
   ("q" nil "quit" :exit t))
-
 (defhydra hydra-lisp-spc-s ()
   "
 ^Search^    ^Edit Pos^   ^Replace^   ^Quit^ 
@@ -140,21 +113,19 @@ _k_ kill
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-comma-t ()
   "
-^GOTO^         ^TESTS^
-_t_ test file  _p_ run project
-_i_ impl file  _n_ run ns
-_f_ test func
-_u_ impl func
-_r_ test report
+^GOTO^           ^TESTS^
+_t_ test/impl    _p_ run project
+_r_ test report  _n_ run ns
+
 "
-  ("t" open-test-file nil :exit t)
-  ("i" open-implementation-file nil :exit t)
-  ("f" go-to-test-function nil :exit t)
-  ("u" go-to-impl-function nil :exit t)
+  ("t" toggle-goto-test-impl nil :exit t)
   ("r" cider-test-show-report nil :exit t)
 
   ("p" cider-test-run-project-tests nil :exit t)
-  ("n" cider-test-run-ns-tests nil :exit t))
+  ("n" cider-test-run-ns-tests nil :exit t)
+
+  ("q" nil "quit" :exit t)
+  )
 
 ;; ============= General: Key Defs  ==============
 (setq none-any-all
@@ -285,10 +256,10 @@ _r_ test report
 (apply 'gdk :keymaps '(cider-test-report-mode-map)
  :states '(normal visual emacs)
  (append
-  '("," (hydra-cider-test-comma/body :wk "tests")
+  '(;; "," (hydra-cider-test-comma/body :wk "tests")
     "k" (cider-test-previous-result :wk "prev result")
     "j" (cider-test-next-result :wk "next result")
-    "d" (cider-test-jump :wk "jump to def"))))
+    "RET" (cider-test-jump :wk "jump to def"))))
 (apply 'gdk :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)
@@ -362,3 +333,29 @@ _r_ test report
 ;;   ("q" nil nil :exit t))
 ;; 
 
+;; (defhydra hydra-cider-test-comma ()
+;;   "
+;; TESTS
+;; ^Run^                    ^Navigate Report^    ^Report^
+;; ----------------------------------------------------------
+;; _p_ run test at point    _k_ prev result      _f_ re-run failed
+;; _n_ test all namespace   _j_ next result      _s_ show report
+;; _a_ all project tests    _d_ goto definition  _h_ hide auto show report
+;; ^^                       _e_ show error
+;; "
+;;   ("p" cider-test-run-test nil :exit t)
+;;   ("n" cider-test-run-ns-tests nil :exit t)
+;;   ("a" cider-test-run-project-tests nil :exit t)
+;;   ("h" (lambda () (interactive)
+;;          (setq cider-auto-test-mode nil))
+;;    nil :exit t)
+
+;;   ("k" cider-test-previous-result nil)
+;;   ("j" cider-test-next-result nil)
+;;   ("d" cider-test-jump :exit t)
+;;   ("e" cider-test-stacktrace nil)
+  
+;;   ("f" cider-test-rerun-failed-tests nil)
+;;   ("s" cider-test-show-report nil)
+  
+;;   ("q" nil "quit" :exit t))

@@ -257,3 +257,8 @@ number>-test"
   (let ((pref (concat (projectile-project-root) "test/"))
         (buf (buffer-file-name)))
     (string-prefix-p pref buf)))
+(defun toggle-goto-test-impl ()
+  (interactive)
+  (if (in-test-file-p)
+      (go-to-impl-function)
+    (go-to-test-function)))
