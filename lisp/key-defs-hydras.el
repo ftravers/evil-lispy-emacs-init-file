@@ -53,32 +53,6 @@ _n_ down    _s_ search   _l_ line
   ("4" winum-select-window-4 nil :exit t)
 
   ("q" nil "quit" :exit t :color pink))
-(defhydra hydra-cider-test ()
-  "
-TESTS
-^Run^                    ^Navigate Report^    ^Report^
-----------------------------------------------------------
-_p_ run test at point    _k_ prev result      _f_ re-run failed
-_n_ test all namespace   _j_ next result      _s_ show report
-_a_ all project tests    _d_ goto definition  _h_ hide auto show report
-_q_ quit                 _e_ show error
-"
-  ("p" cider-test-run-test nil :exit t)
-  ("n" cider-test-run-ns-tests nil :exit t)
-  ("a" cider-test-run-project-tests nil :exit t)
-  ("h" (lambda () (interactive)
-         (setq cider-auto-test-mode nil))
-   nil :exit t)
-
-  ("k" cider-test-previous-result nil)
-  ("j" cider-test-next-result nil)
-  ("d" cider-test-jump :exit t)
-  ("e" cider-test-stacktrace nil)
-  
-  ("f" cider-test-rerun-failed-tests nil)
-  ("s" cider-test-show-report nil)
-  
-  ("q" nil nil :exit t))
 (defhydra hydra-cider-eval ()
   "
 EVAL
@@ -111,8 +85,8 @@ _[_ to open paren
   ("q" nil "quit" :exit t)
 
   )
-
 ;; get here by: ', r' from cloj buffer
+
 (defhydra hydra-cloj-comma-r ()
   "
 ^REPL^         ^SEXP^  
@@ -128,14 +102,48 @@ _k_ kill
   ("p" eval-sexp-print-in-comment nil :exit t)
 
   ("q" nil "quit" :exit t))
+(defhydra hydra-cider-test-comma ()
+  "
+TESTS
+^Run^                    ^Navigate Report^    ^Report^
+----------------------------------------------------------
+_p_ run test at point    _k_ prev result      _f_ re-run failed
+_n_ test all namespace   _j_ next result      _s_ show report
+_a_ all project tests    _d_ goto definition  _h_ hide auto show report
+^^                       _e_ show error
+"
+  ("p" cider-test-run-test nil :exit t)
+  ("n" cider-test-run-ns-tests nil :exit t)
+  ("a" cider-test-run-project-tests nil :exit t)
+  ("h" (lambda () (interactive)
+         (setq cider-auto-test-mode nil))
+   nil :exit t)
+
+  ("k" cider-test-previous-result nil)
+  ("j" cider-test-next-result nil)
+  ("d" cider-test-jump :exit t)
+  ("e" cider-test-stacktrace nil)
+  
+  ("f" cider-test-rerun-failed-tests nil)
+  ("s" cider-test-show-report nil)
+  
+  ("q" nil "quit" :exit t))
+(defhydra hydra-cloj-comma-t ()
+  "
+^FILES^         ^TESTS^
+_t_ goto tests  _p_ run project
+_i_ goto impl   _n_ run ns
+
+_r_ goto test reporr
+"
+  ("t" open-test-file nil :exit t)
+  ("i" open-implementation-file nil :exit t)
+  ("p" cider-test-run-project-tests nil :exit t)
+  ("n" cider-test-run-ns-tests nil :exit t)
+  ("r" cider-test-show-report nil :exit t)
+  )
 
 ;; get here when hit ', r' from REPL 
-(defhydra hydra-repl-comma ()
-  "
-_r_ goto cloj buffer
-"
-  ("r" cider-switch-to-last-clojure-buffer nil :exit t)
-  ("q" nil "quit" :exit t))
 (defhydra hydra-clojure-comma ()
   "
 ^CIDER^          ^SEXP^            
@@ -154,9 +162,16 @@ _l_ load buffer  _[_ to open paren
   ("k" backward-parent-sexp nil)
   ("[" first-open-paren nil :exit t)
 
-  ("r" hydra-cloj-repl/body "+REPL+" :exit t)
   ("i" cider-insert-last-sexp-in-repl nil :exit t)
+  ("r" hydra-cloj-comma-r/body "+REPL+" :exit t)
+  ("t" hydra-cloj-comma-t/body "+TESTS+" :exit t)
 
+  ("q" nil "quit" :exit t))
+(defhydra hydra-repl-comma ()
+  "
+_r_ goto cloj buffer
+"
+  ("r" cider-switch-to-last-clojure-buffer nil :exit t)
   ("q" nil "quit" :exit t))
 
 ;; ============= General: Key Defs  ==============
@@ -258,11 +273,10 @@ _l_ load buffer  _[_ to open paren
        '("jr" (:wk "goto REPL")
          "jr" (cider-switch-to-last-clojure-buffer :wk "goto REPL"))
        comma-cloj-common))
-(setq cider-test-report-keys
-      '("k" cider-test-previous-result)
-      ;; ("j" cider-test-next-result nil)
-      ;; ("d" cider-test-jump :exit t)
-      )
+;; (setq cider-test-report-keys
+;;       '("k" cider-test-previous-result)
+;;       '("j" cider-test-next-result nil)
+;;       '("d" cider-test-jump :exit t))
 
 (fset 'gdk 'general-define-key)
 
@@ -279,27 +293,29 @@ _l_ load buffer  _[_ to open paren
 ;; ==> None.....Normal
 (apply 'gdk :states ; :keymaps: None/All
        '(normal visual emacs)
-       none-any-all) 
+       none-any-all)
+(apply 'gdk :keymaps '(clojure-mode-map)
+       :states '(normal visual emacs)
+       (append '("" nil)
+               '("," (hydra-clojure-comma/body :wk "comma"))
+               none-normal-lisp)) 
+(apply 'gdk :keymaps '(cider-test-report-mode-map)
+       :states '(normal visual emacs)
+       (append '("," (hydra-cider-test-comma/body :wk "tests"))))
 (apply 'gdk :keymaps '(emacs-lisp-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)
                '("," (hydra-elisp-comma/body :wk "comma"))
                none-normal-lisp))
-(apply 'gdk :keymaps '(clojure-mode-map)
-       :states '(normal visual emacs)
-       (append '("" nil)
-               '("," (hydra-clojure-comma/body :wk "comma"))
-               none-normal-lisp))
-
-;; ==> None.....Normal & Input
 (apply 'gdk :keymaps '(cider-repl-mode-map)
-       :states '(normal visual emacs input)
+       :states '(normal visual emacs)
        (append '("" nil)
                '("C-k" nil) ;; cannot get "C-k" unbound :(
                '("," hydra-repl-comma/body :wk "comma"
-                 "C-k" (cider-repl-backward-input :wk "Previous Command")
-                 "C-j" (cider-repl-forward-input :wk "Next Command"))
-               none-any-lisp))  
+                 "k" (cider-repl-backward-input :wk "Previous Command")
+                 "j" (cider-repl-forward-input :wk "Next Command")
+                 "i" (evil-lispy-state :wk "insert -> lispy state"))
+               none-any-lisp))
 
 ;; ==> SPC......Normal
 (apply 'gdk :prefix "SPC" ; :keymaps: None/All
@@ -314,11 +330,6 @@ _l_ load buffer  _[_ to open paren
          magit-log-mode-map)
        :states '(normal visual emacs)
        spc-kz)
-
-;; ==> Comma....Normal
-;; (apply 'gdk :prefix "," :keymaps '(clojure-mode-map cider-test-report-mode-map)
-;;        :states '(normal visual emacs)
-;;        (append '("" nil) comma-cloj))
 
 ;; ==> OTHER??
 (general-def org-mode-map "C-'" 'org-edit-special)
@@ -340,3 +351,18 @@ _l_ load buffer  _[_ to open paren
      (lispy-define-key lispy-mode-map (kbd ":") 'evil-ex)
      (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex)
      ))
+
+;; ==> None.....Input
+;; (apply 'gdk :keymaps '(cider-repl-mode-map)
+;;        :states '(input)
+;;        (append '("" nil)
+;;                '("C-k" nil) ;; cannot get "C-k" unbound :(
+;;                '("," hydra-repl-comma/body :wk "comma"
+;;                  "C-k" (cider-repl-backward-input :wk "Previous Command")
+;;                  "C-j" (cider-repl-forward-input :wk "Next Command"))
+;;                none-any-lisp))
+
+;; ==> Comma....Normal
+;; (apply 'gdk :prefix "," :keymaps '(clojure-mode-map)
+;;        :states '(normal visual emacs)
+;;        (append '("" nil) comma-cloj))

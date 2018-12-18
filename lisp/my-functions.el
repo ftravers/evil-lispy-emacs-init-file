@@ -202,6 +202,22 @@ that."
 
 ;; write a defun that opens the corresponding test file
 ;; clojure-find-ns -> reports the current clojure buffer ns
-(defun open-test-file () (interactive)
-       (message "Current NS is: %s" (clojure-find-ns)))
-;=> "The color is blue"
+(defun open-test-file ()
+  "open the corresponding test file to this implementation file"
+  (interactive)
+  (let*
+      ((no-dash-ns (replace-regexp-in-string "-" "_" (clojure-find-ns)))
+       (no-dot-ns (replace-regexp-in-string (regexp-quote ".") "/" no-dash-ns))
+       (file-extension (file-name-extension (buffer-file-name)))
+       (test-file (concat (projectile-project-root) "test/" no-dot-ns "_test." file-extension)))
+    (find-file test-file)))
+(defun open-implementation-file ()
+  "open the corresponding implementation file for this test file."
+  (interactive)
+  (let*
+      ((no-test-ns (replace-regexp-in-string "-test" "" (clojure-find-ns)))
+       (no-dash-ns (replace-regexp-in-string "-" "_" no-test-ns))
+       (no-dot-ns (replace-regexp-in-string (regexp-quote ".") "/" no-dash-ns))
+       (file-extension (file-name-extension (buffer-file-name)))
+       (impl-file (concat (projectile-project-root) "src/" no-dot-ns "." file-extension)))
+    (find-file impl-file)))
