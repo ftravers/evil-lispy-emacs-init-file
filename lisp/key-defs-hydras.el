@@ -1,58 +1,4 @@
 ;; ============= HYDRAS ===============================
-;; ^Registers^  
- ;; _m_ mark pt
- ;; _u_ jump to
- ;; _v_ view
-(defhydra hydra-prog-search ()
-  "
-^Search^    ^Edit Pos^   ^Replace^   ^Quit^ 
-_y_ sym@pt  _k_ prev     _r_ sym@pt  _q_ quit
-_p_ up      _j_ next     ^Goto^
-_n_ down    _s_ search   _l_ line
-"
-  ("m" point-to-register nil :exit t)
-  ("u" jump-to-register nil :exit t)
-  ("v" view-register nil :exit t)
-
-  ("k" goto-last-change nil)
-  ("j" goto-last-change-reverse nil)
-  ("l" avy-goto-line nil :exit t)
-
-  ("b" hydra-buffers/body ">BUFFERS<" :exit t)
-
-  ("y" isearch-forward-symbol-at-point nil)
-  ("p" isearch-repeat-backward nil)
-  ("n" isearch-repeat-forward nil)
-  ("s" isearch-forward nil :exit t)
-
-  ("r" query-replace-symbol-at-point nil :exit t)
-  ("q" isearch-exit nil :exit t)) 
-(defhydra hydra-buffers ()
-  "
- ^Goto^    ^^^       BUFFERS ^^^
-^Window^   ^ Goto  ^ ^ Save  ^ ^ Misc  ^  
-^------^   ^-------^ ^-------^ ^-------^
-  _1_      _k_ prev  _s_ this  _d_ kill
-  _2_      _j_ next  _a_ all   _b_ list 
-  _3_      ^ ^       ^ ^       _c_ kill (no exit)
-  _4_
-"
-  ("j" next-buffer nil)
-  ("k" previous-buffer nil)
-
-  ("s" save-buffer nil)
-  ("a" (lambda () (interactive) (save-some-buffers t)) nil :exit t)
-  ("b" helm-mini nil :exit t)
-  ("d" kill-this-buffer nil :exit t)
-  ("c" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
-
-  ("1" winum-select-window-1 nil :exit t)
-  ("2" winum-select-window-2 nil :exit t)
-  ("3" winum-select-window-3 nil :exit t)
-  ("4" winum-select-window-4 nil :exit t)
-
-  ("q" nil "quit" :exit t :color pink))
-
 (defhydra hydra-elisp-comma ()
   "
 ^SEXP MOVEMENT^    ^SEXP FORMAT^      ^MISC^
@@ -65,7 +11,7 @@ _0_ to top level
   ("j" forward-parent-sexp nil)
   ("[" first-open-paren nil :exit t)
   ("0" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state))  nil)
-   
+  
   ("o" insert-space-around-sexp nil)
 
   ("d" edebug-defun nil :exit t)
@@ -127,6 +73,56 @@ _r_ goto cloj buffer
 "
   ("r" cider-switch-to-last-clojure-buffer nil :exit t)
   ("q" nil "quit" :exit t))
+
+(defhydra hydra-lisp-spc-s ()
+  "
+^Search^    ^Edit Pos^   ^Replace^   ^Quit^ 
+_y_ sym@pt  _k_ prev     _r_ sym@pt  _q_ quit
+_p_ up      _j_ next     ^Goto^
+_n_ down    _s_ search   _l_ line
+"
+  ("m" point-to-register nil :exit t)
+  ("u" jump-to-register nil :exit t)
+  ("v" view-register nil :exit t)
+
+  ("k" goto-last-change nil)
+  ("j" goto-last-change-reverse nil)
+  ("l" avy-goto-line nil :exit t)
+
+  ("b" hydra-buffers/body ">BUFFERS<" :exit t)
+
+  ("y" isearch-forward-symbol-at-point nil)
+  ("p" isearch-repeat-backward nil)
+  ("n" isearch-repeat-forward nil)
+  ("s" isearch-forward nil :exit t)
+
+  ("r" query-replace-symbol-at-point nil :exit t)
+  ("q" isearch-exit nil :exit t))
+(defhydra hydra-all-spc-b ()
+  "
+ ^Goto^    ^^^       BUFFERS ^^^
+^Window^   ^ Goto  ^ ^ Save  ^ ^ Misc  ^  
+^------^   ^-------^ ^-------^ ^-------^
+  _1_      _k_ prev  _s_ this  _d_ kill
+  _2_      _j_ next  _a_ all   _b_ list 
+  _3_      ^ ^       ^ ^       _c_ kill (no exit)
+  _4_
+"
+  ("j" next-buffer nil)
+  ("k" previous-buffer nil)
+
+  ("s" save-buffer nil)
+  ("a" (lambda () (interactive) (save-some-buffers t)) nil :exit t)
+  ("b" helm-mini nil :exit t)
+  ("d" kill-this-buffer nil :exit t)
+  ("c" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
+
+  ("1" winum-select-window-1 nil :exit t)
+  ("2" winum-select-window-2 nil :exit t)
+  ("3" winum-select-window-3 nil :exit t)
+  ("4" winum-select-window-4 nil :exit t)
+
+  ("q" nil "quit" :exit t :color pink))
 (defhydra hydra-cloj-comma-r ()
   "
 ^REPL^         ^SEXP^  
@@ -187,11 +183,11 @@ _r_ test report
 (setq spc-kz
       '("" nil
         "f" (:ignore t :wk "Files")
-        "b" (hydra-buffers/body :wk ">BUFFERS<")
+        "b" (hydra-all-spc-b/body :wk ">BUFFERS<")
         "g" (:ignore t :wk "Magit")
         "o" (:ignore t :wk "Fold")
         "p" (:ignore t :wk "Projects")
-        "s" (hydra-prog-search/body :wk "Search")
+        "s" (hydra-lisp-spc-s/body :wk "Search")
         "w" (:ignore t :wk "Window")
         "q" (:ignore t :wk "Quit")
 
@@ -362,3 +358,4 @@ _r_ test report
 ;;   ("p" eval-sexp-print-in-comment nil :exit t)
 ;;   ("q" nil nil :exit t))
 ;; 
+
