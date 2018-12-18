@@ -145,9 +145,11 @@ that."
 (defun top-level-sexp-p () (interactive)
        (and (= 40 (char-after))
             (= 0 (current-column)))) 
-(defun goto-top-level-sexp () (interactive)
-       (if (not (top-level-sexp-p))
-           (beginning-of-defun)))
+(defun goto-top-level-sexp ()
+  "go to the beginning of the current defun"
+  (interactive)
+  (if (not (top-level-sexp-p))
+      (beginning-of-defun)))
 (defun forward-parent-sexp ()
   (interactive)
   (goto-top-level-sexp)
@@ -221,3 +223,34 @@ that."
        (file-extension (file-name-extension (buffer-file-name)))
        (impl-file (concat (projectile-project-root) "src/" no-dot-ns "." file-extension)))
     (find-file impl-file)))
+
+(defun get-curr-function-name ()
+  (save-excursion
+    (goto-top-level-sexp)
+    (forward-word)
+    (forward-char)
+    (thing-at-point 'symbol)))
+
+(defun remove-test-suffix (test-name)
+  (replace-regexp-in-string
+   "-[^-]*-test"
+   "" test-name))
+
+(defun gcfni ()
+  (interactive)
+  (message "curr func: %s" (get-curr-function-name)))
+
+(defun go-to-test-function ()
+  (interactive)
+  (let ((curr-fn-name (get-curr-function-name)))
+    (open-test-file)
+    (goto-char (point-min))
+    (search-forward (concat "deftest " curr-fn-name))))
+
+(defun go-to-impl-function ()
+  (interactive)
+  (let* ((curr-fn-name (get-curr-function-name))
+         (curr-fn-name-no-suffic (remove-test-suffix curr-fn-name)))
+    (open-impl-file)
+    (goto-char (point-min))
+    (search-forward (concat "deftest " curr-fn-name))))
