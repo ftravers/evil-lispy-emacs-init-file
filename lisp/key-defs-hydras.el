@@ -2,19 +2,18 @@
 (defhydra hydra-elisp-comma ()
   "
 ^SEXP MOVEMENT^    ^^               ^^
-_0_ to top level   _d_ debug defun  _o_ insert space around   
+_[_ to top level   _d_ debug defun  _o_ insert space around   
 _j_ next           _e_ sexp/buffer 
-_k_ next           _._ find defn 
-_[_ to open paren  _,_ pop back
+_k_ prev           _._ find defn 
+_]_ to open paren  _,_ pop back
 "
-  ("k" backward-parent-sexp nil)
+  ("[" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state)) nil :exit t)
   ("j" forward-parent-sexp nil)
-  ("[" first-open-paren nil :exit t)
-  ("0" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state))  nil)
+  ("k" backward-parent-sexp nil)
+  ("]" first-open-paren nil :exit t)
   
   ("d" edebug-defun nil :exit t)
   ("e" eval-sexp-or-buffer nil :exit t)
-
   ("." lispy-goto-symbol "find definition" :exit t)
   ("," xref-pop-marker-stack "pop back" :exit t)
 
