@@ -1,40 +1,47 @@
 ;; ============= HYDRAS ===============================
 (defhydra hydra-elisp-comma ()
   "
-^SEXP MOVEMENT^    ^SEXP FORMAT^      ^MISC^
-_k_ prev           _o_ space around   _d_ debug defun
-_j_ next
-_[_ to open paren
-_0_ to top level
+^SEXP MOVEMENT^    ^^               ^^
+_0_ to top level   _d_ debug defun  _o_ insert space around   
+_j_ next           _e_ sexp/buffer 
+_k_ next           _._ find defn 
+_[_ to open paren  _,_ pop back
 "
   ("k" backward-parent-sexp nil)
   ("j" forward-parent-sexp nil)
   ("[" first-open-paren nil :exit t)
   ("0" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state))  nil)
   
-  ("o" insert-space-around-sexp nil)
-
   ("d" edebug-defun nil :exit t)
+  ("e" eval-sexp-or-buffer nil :exit t)
+
+  ("." lispy-goto-symbol "find definition" :exit t)
+  ("," xref-pop-marker-stack "pop back" :exit t)
+
+  ("o" insert-space-around-sexp nil)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-clojure-comma ()
   "
-^CIDER^          ^SEXP MOVEMENT^   ^SEXP FORMAT^            
-_'_ CLJ  JackIn  _0_ to top level  _o_ space around  
-_\"_ CLJS JackIn  _j_ next
-_d_ debug defn  _k_ next          
-_l_ load buffer  _[_ to open paren 
+^SEXP MOVEMENT^    ^EVAL^            ^CIDER^            ^SEXP FORMAT^      
+_0_ to top level   _l_ load buffer   _'_ CLJ  JackIn    _o_ space around
+_j_ next           _e_ top lvl sexp  _\"_ CLJS JackIn
+_k_ next           _d_ debug defn
+_[_ to open paren  
 "
-  ("'" cider-jack-in nil :exit t)
-  ("\"" cider-jack-in-cljs nil :exit t)
-  ("d" cider-debug-defun-at-point nil :exit t)
-  ("l" load-buffer-set-ns nil :exit t)
-  
-  ("o" insert-space-around-sexp nil)
+  ("0" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state))  nil)
   ("j" forward-parent-sexp nil)
   ("k" backward-parent-sexp nil)
   ("[" first-open-paren nil :exit t)
-  ("0" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state))  nil)
+
+  ("l" load-buffer-set-ns nil :exit t)
+  ("e" cider-eval-defun-at-point nil :exit t)
+  ("d" cider-debug-defun-at-point nil :exit t)
+  
+  ("'" cider-jack-in nil :exit t)
+  ("\"" cider-jack-in-cljs nil :exit t)
+
+  ("o" insert-space-around-sexp nil)
 
   ("i" cider-insert-last-sexp-in-repl nil :exit t)
   ("r" hydra-cloj-comma-r/body "+REPL+" :exit t)
@@ -47,6 +54,17 @@ _r_ goto cloj buffer
 "
   ("r" cider-switch-to-last-clojure-buffer nil :exit t)
   ("q" nil "quit" :exit t))
+(defhydra hydra-cider-test-report-comma ()
+  "
+^TEST^               ^TEST MOVEMENT^
+_r_ re-run test      _k_ prev
+_d_ goto definition  _j_ next 
+"
+  ("r" cider-test-run-test nil)
+  ("d" cider-test-jump nil :exit t)
+
+  ("k" cider-test-previous-result nil)
+  ("j" cider-test-next-result nil))
 (defhydra hydra-lisp-spc-s ()
   "
 ^Search^    ^Edit Pos^   ^Replace^   ^Quit^ 
@@ -134,7 +152,7 @@ _r_ test report  _n_ run ns
         "C-p" (helm-show-kill-ring :wk "show kill ring")
         "ESC" (keyboard-escape-quit :wk "quit")))
 (setq none-shared-lisp
-      '(";" (lispy-comment :wk "lispy comment")
+      '("                       ;" (lispy-comment :wk "lispy comment")
         "C-u" (universal-argument :wk "universal argument")
         "M-." (lispy-goto-symbol :wk "goto symbol")
         "M-," (pop-tag-mark :wk "pop from symbol")
@@ -152,7 +170,9 @@ _r_ test report  _n_ run ns
          "a" (a-lispy :wk "append -> lispy state")
          "A" (A-lispy :wk "append line -> lispy state")
          "[" (evil-lispy/enter-state-left :wk "enter lispy mode left")
-         "]" (evil-lispy/enter-state-right :wk "enter lispy mode right"))
+         "]" (evil-lispy/enter-state-right :wk "enter lispy mode right")
+         "S-{" (goto-top-level-sexp :wk "beg of defun")
+         )
        none-shared-lisp))
 (setq spc-kz
       '("" nil
@@ -172,9 +192,9 @@ _r_ test report  _n_ run ns
         "5" (winum-select-window-5 :wk "move window 5")
         "/" (helm-projectile-ag :wich-key "ag")
         "SPC" (helm-M-x :wk "run command")
-        "." (lispy-goto-symbol :wk "find definition")
-        "," (xref-pop-marker-stack :wk "pop back")
-        "e" (eval-sexp-or-buffer :wk "elisp eval buffer")
+        ;; "." (lispy-goto-symbol :wk "find definition")
+        ;; "," (xref-pop-marker-stack :wk "pop back")
+        ;; "e" (eval-sexp-or-buffer :wk "elisp eval buffer")
 
         "ff" (helm-find-files :wk "Find Files")
         ;; "fed" (ffs "/home/fenton/.emacs.d/init.el" :wk "open init.el")
@@ -256,7 +276,7 @@ _r_ test report  _n_ run ns
 (apply 'gdk :keymaps '(cider-test-report-mode-map)
  :states '(normal visual emacs)
  (append
-  '(;; "," (hydra-cider-test-comma/body :wk "tests")
+  '("," (hydra-cider-test-report-comma/body :wk "tests")
     "k" (cider-test-previous-result :wk "prev result")
     "j" (cider-test-next-result :wk "next result")
     "RET" (cider-test-jump :wk "jump to def"))))
