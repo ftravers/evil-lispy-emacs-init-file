@@ -117,12 +117,9 @@
       desktop-files-not-to-save   "^$" )
 (desktop-save-mode 1)
 
-
-
 ;; ========== function defs ==========
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (load "my-functions.el")
-
 
 ;; ============= Hooks ==================
 
@@ -149,7 +146,6 @@
 
 ;; ========== key defs and hydras ==========
 (load "key-defs-hydras.el")
-
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

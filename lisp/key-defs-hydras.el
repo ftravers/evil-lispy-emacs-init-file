@@ -20,18 +20,18 @@ _]_ to open paren  _,_ pop back
   ("o" insert-space-around-sexp nil)
 
   ("q" nil "quit" :exit t))
-(defhydra hydra-clojure-comma ()
+(defhydra hydra-cloj-comma ()
   "
 ^SEXP MOVEMENT^    ^EVAL^            ^CIDER^            ^SEXP FORMAT^      
-_0_ to top level   _l_ load buffer   _'_ CLJ  JackIn    _o_ space around
+_[_ to top level   _l_ load buffer   _'_ CLJ  JackIn    _o_ space around
 _j_ next           _e_ top lvl sexp  _\"_ CLJS JackIn
-_k_ next           _d_ debug defn
-_[_ to open paren  
+_k_ next           _d_ debug defn    _._ find defn
+_]_ to open paren  ^^                _,_ pop back
 "
-  ("0" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state))  nil)
+  ("[" (lambda () (interactive) (goto-top-level-sexp) (evil-lispy-state))  nil)
   ("j" forward-parent-sexp nil)
   ("k" backward-parent-sexp nil)
-  ("[" first-open-paren nil :exit t)
+  ("]" first-open-paren nil :exit t)
 
   ("l" load-buffer-set-ns nil :exit t)
   ("e" cider-eval-defun-at-point nil :exit t)
@@ -39,19 +39,27 @@ _[_ to open paren
   
   ("'" cider-jack-in nil :exit t)
   ("\"" cider-jack-in-cljs nil :exit t)
+  ("." cider-find-var "find definition" :exit t)
+  ("," xref-pop-marker-stack "pop back" :exit t)
 
   ("o" insert-space-around-sexp nil)
 
-  ("i" cider-insert-last-sexp-in-repl nil :exit t)
   ("r" hydra-cloj-comma-r/body "+REPL+" :exit t)
   ("t" hydra-cloj-comma-t/body "+TESTS+" :exit t)
-
+  ("g" hydra-cloj-comma-g/body "+GO+" :exit t)
+  
   ("q" nil "quit" :exit t))
 (defhydra hydra-repl-comma ()
+  ""
+  ("r" hydra-repl-comma-r/body "+REPL+" :exit t)
+  ("q" nil "quit" :exit t))
+(defhydra hydra-repl-comma-r ()
   "
 _r_ goto cloj buffer
+_k_ kill
 "
   ("r" cider-switch-to-last-clojure-buffer nil :exit t)
+  ("k" cider-quit nil :exit t)
   ("q" nil "quit" :exit t))
 (defhydra hydra-cider-test-report-comma ()
   "
@@ -63,7 +71,9 @@ _d_ goto definition  _j_ next
   ("d" cider-test-jump nil :exit t)
 
   ("k" cider-test-previous-result nil)
-  ("j" cider-test-next-result nil))
+  ("j" cider-test-next-result nil)
+
+  ("q" nil "quit" :exit t))
 (defhydra hydra-lisp-spc-s ()
   "
 ^Search^    ^Edit Pos^   ^Replace^   ^Quit^ 
@@ -128,6 +138,18 @@ _k_ kill
   ("p" eval-sexp-print-in-comment nil :exit t)
 
   ("q" nil "quit" :exit t))
+(defhydra hydra-cloj-comma-g ()
+  "
+GOTO
+_r_ repl _c_ cloj _t_ test _p_ test report
+"
+  ("c" cider-switch-to-last-clojure-buffer nil :exit t)
+  ("r" cider-switch-to-repl-buffer nil :exit t)
+  ("p" cider-test-show-report nil :exit t)
+  ("t" toggle-goto-test-impl nil :exit t)
+
+  ("q" nil "quit" :exit t)
+  )
 (defhydra hydra-cloj-comma-t ()
   "
 ^GOTO^           ^TESTS^
@@ -170,7 +192,6 @@ _r_ test report  _n_ run ns
          "A" (A-lispy :wk "append line -> lispy state")
          "[" (evil-lispy/enter-state-left :wk "enter lispy mode left")
          "]" (evil-lispy/enter-state-right :wk "enter lispy mode right")
-         "S-{" (goto-top-level-sexp :wk "beg of defun")
          )
        none-shared-lisp))
 (setq spc-kz
@@ -265,7 +286,7 @@ _r_ test report  _n_ run ns
 (apply 'gdk :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)
-               '("," (hydra-clojure-comma/body :wk "comma"))
+               '("," (hydra-cloj-comma/body :wk "comma"))
                none-normal-lisp)) 
 (apply 'gdk :keymaps '(emacs-lisp-mode-map)
        :states '(normal visual emacs)
@@ -275,10 +296,14 @@ _r_ test report  _n_ run ns
 (apply 'gdk :keymaps '(cider-test-report-mode-map)
  :states '(normal visual emacs)
  (append
-  '("," (hydra-cider-test-report-comma/body :wk "tests")
-    "k" (cider-test-previous-result :wk "prev result")
-    "j" (cider-test-next-result :wk "next result")
-    "RET" (cider-test-jump :wk "jump to def"))))
+  '("," (hydra-cider-test-report-comma/body :wk "tests"))
+  ;; "k" (cider-test-previous-result :wk "prev result")
+  ;; "j" (cider-test-next-result :wk "next result")
+  ;; "RET" (cider-test-jump :wk "jump to def")
+  none-normal-lisp
+  '("q" nil
+    "q" (cider-popup-buffer-quit-function :wk "quit"))))
+
 (apply 'gdk :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)

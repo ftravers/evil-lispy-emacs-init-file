@@ -229,9 +229,7 @@ that."
     (forward-char)
     (thing-at-point 'symbol)))
 (defun remove-test-suffix (test-name)
-  (replace-regexp-in-string
-   "-[^-]*-test"
-   "" test-name))
+  (replace-regexp-in-string "-tests" "" test-name))
 (defun go-to-test-function ()
   "go to test definition file and goto first test that tests the
 function that you are currently in/on.  test functions should be
