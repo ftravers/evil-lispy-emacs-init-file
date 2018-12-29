@@ -52,6 +52,7 @@ _]_ to open paren  ^^                _,_ pop back
 (defhydra hydra-repl-comma ()
   ""
   ("r" hydra-repl-comma-r/body "+REPL+" :exit t)
+  ("g" hydra-cloj-comma-g/body "+GO+" :exit t)
   ("q" nil "quit" :exit t))
 (defhydra hydra-repl-comma-r ()
   "
@@ -123,6 +124,34 @@ _n_ down    _s_ search   _l_ line
   ("4" winum-select-window-4 nil :exit t)
 
   ("q" nil "quit" :exit t :color pink))
+(defhydra hydra-elisp-g ()
+  "
+GOTO
+_f_ my fns    _l_ line
+_h_ my hydras
+"
+  ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) nil :exit t)
+  ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) nil :exit t)
+
+  ("l" avy-goto-line nil :exit t)
+
+  ("q" nil "quit" :exit t))
+(defhydra hydra-cloj-g ()
+  "
+^CLOJ^           ^FILES^        ^MOTION^
+_r_ REPL         _f_ my fns     _l_ line
+_t_ test/impl    _h_ my hydras
+_p_ test report
+"
+  ("r" cider-switch-to-repl-buffer nil :exit t)
+  ("t" toggle-goto-test-impl nil :exit t)
+  ("p" cider-test-show-report nil :exit t)
+  ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) :exit t)
+  ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) :exit t)
+
+  ("l" avy-goto-line nil :exit t)
+
+  ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-comma-r ()
   "
 ^REPL^         ^SEXP^  
@@ -141,15 +170,15 @@ _k_ kill
 (defhydra hydra-cloj-comma-g ()
   "
 GOTO
-_r_ repl _c_ cloj _t_ test _p_ test report
+_r_ repl _c_ cloj _t_ test _p_ test report 
 "
-  ("c" cider-switch-to-last-clojure-buffer nil :exit t)
+;_s_ spec 
   ("r" cider-switch-to-repl-buffer nil :exit t)
-  ("p" cider-test-show-report nil :exit t)
+  ("c" cider-switch-to-last-clojure-buffer nil :exit t)
   ("t" toggle-goto-test-impl nil :exit t)
+  ("p" cider-test-show-report nil :exit t)
 
-  ("q" nil "quit" :exit t)
-  )
+  ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-comma-t ()
   "
 ^GOTO^           ^TESTS^
@@ -163,11 +192,16 @@ _r_ test report  _n_ run ns
   ("p" cider-test-run-project-tests nil :exit t)
   ("n" cider-test-run-ns-tests nil :exit t)
 
-  ("q" nil "quit" :exit t)
-  )
-
+  ("q" nil "quit" :exit t))
+(defhydra hydra-any-spc-e ()
+  "
+EDIT
+"
+  ("i" (lambda () (interactive) (find-file (concat user-emacs-directory "/init.el"))) "init" :exit t)
+  ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) "functions" :exit t)
+  ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) "hydras" :exit t))
 ;; ============= General: Key Defs  ==============
-(setq none-any-all
+(setq none-any-all ; prefix-key: none, state: any, keymap: all
       '("(" (lispy-parens-from-normal :wk "enter lispy, insert parens")
         "q" (cider-popup-buffer-quit-function :wk "quit")
         "C-p" (helm-show-kill-ring :wk "show kill ring")
@@ -196,6 +230,7 @@ _r_ test report  _n_ run ns
        none-shared-lisp))
 (setq spc-kz
       '("" nil
+        "e" (hydra-any-spc-e/body :wk ">EDIT<")
         "f" (:ignore t :wk "Files")
         "b" (hydra-all-spc-b/body :wk ">BUFFERS<")
         "g" (:ignore t :wk "Magit")
@@ -215,6 +250,7 @@ _r_ test report  _n_ run ns
         ;; "." (lispy-goto-symbol :wk "find definition")
         ;; "," (xref-pop-marker-stack :wk "pop back")
         ;; "e" (eval-sexp-or-buffer :wk "elisp eval buffer")
+
 
         "ff" (helm-find-files :wk "Find Files")
         ;; "fed" (ffs "/home/fenton/.emacs.d/init.el" :wk "open init.el")
@@ -286,11 +322,13 @@ _r_ test report  _n_ run ns
 (apply 'gdk :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)
+               '("g" (hydra-cloj-g/body :wk ""))
                '("," (hydra-cloj-comma/body :wk "comma"))
                none-normal-lisp)) 
 (apply 'gdk :keymaps '(emacs-lisp-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)
+               '("g" (hydra-elisp-g/body :wk ""))
                '("," (hydra-elisp-comma/body :wk "comma"))
                none-normal-lisp))
 (apply 'gdk :keymaps '(cider-test-report-mode-map)
