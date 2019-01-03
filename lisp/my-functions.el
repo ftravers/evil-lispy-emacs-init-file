@@ -317,3 +317,23 @@ number>-test"
 (defun find-clojure-ns ()
   (interactive)
   (message "cloj ns: %s" (clojure-find-ns)))
+
+;; when a cider file is loaded refresh ns
+;; (defun my-reload-dependents ()
+;;   (let* ((buf (get-buffer (cider-current-repl-buffer)))
+;;          (ns (with-current-buffer buf nrepl-buffer-ns)))
+;;     (cider-tooling-eval
+;;      (format
+;;       "(when-let [rd (resolve 'com.palletops.ns-reload.repl/ns-reload-hook)]
+;;          (@rd '%s {))"
+;;       (cider-current-ns))
+;;      (cider-interactive-eval-handler buf)
+;;      ns)))
+;; (add-hook 'cider-file-loaded-hook 'my-reload-dependents)
+(defun help/save-all-file-buffers ()
+  "Saves every buffer associated with a file."
+  (interactive)
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (and (buffer-file-name) (buffer-modified-p))
+        (save-buffer)))))

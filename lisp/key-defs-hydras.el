@@ -77,77 +77,82 @@ _d_ goto definition  _j_ next
   ("q" nil "quit" :exit t))
 (defhydra hydra-lisp-spc-s ()
   "
-^Search^    ^Edit Pos^   ^Replace^   ^Quit^ 
-_y_ sym@pt  _k_ prev     _r_ sym@pt  _q_ quit
-_p_ up      _j_ next     ^Goto^
-_n_ down    _s_ search   _l_ line
+^Symbol^    ^Misc^   
+_y_ search  _s_ search  
+_k_ up         
+_j_ down      
+_r_ replace
 "
-  ("m" point-to-register nil :exit t)
-  ("u" jump-to-register nil :exit t)
-  ("v" view-register nil :exit t)
-
-  ("k" goto-last-change nil)
-  ("j" goto-last-change-reverse nil)
-  ("l" avy-goto-line nil :exit t)
-
-  ("b" hydra-buffers/body ">BUFFERS<" :exit t)
-
   ("y" isearch-forward-symbol-at-point nil)
-  ("p" isearch-repeat-backward nil)
-  ("n" isearch-repeat-forward nil)
+  ("k" isearch-repeat-backward nil)
+  ("j" isearch-repeat-forward nil)
+  ("r" query-replace-symbol-at-point nil :exit t)
+
   ("s" isearch-forward nil :exit t)
 
-  ("r" query-replace-symbol-at-point nil :exit t)
-  ("q" isearch-exit nil :exit t))
+  ("q" isearch-exit "Quit" :exit t))
 (defhydra hydra-all-spc-b ()
   "
- ^Goto^    ^^^       BUFFERS ^^^
-^Window^   ^ Goto  ^ ^ Save  ^ ^ Misc  ^  
-^------^   ^-------^ ^-------^ ^-------^
-  _1_      _k_ prev  _s_ this  _d_ kill
-  _2_      _j_ next  _a_ all   _b_ list 
-  _3_      ^ ^       ^ ^       _c_ kill (no exit)
+ ^Goto^  ^^^       BUFFERS ^^^             ^FILES^
+^Window^ ^ Goto  ^ ^ Save  ^ ^ Misc  ^     ^Misc^ 
+^------^ ^-------^ ^-------^ ^-----------^ ^-----^
+  _1_    _k_ prev  _s_ this  _d_ kill-quit _f_ open
+  _2_    _j_ next  _a_ all   _b_ list 
+  _3_    ^ ^       ^ ^       _c_ kill-stay
   _4_
 "
-  ("j" next-buffer nil)
-  ("k" previous-buffer nil)
-
-  ("s" save-buffer nil)
-  ("a" (lambda () (interactive) (save-some-buffers t)) nil :exit t)
-  ("b" helm-mini nil :exit t)
-  ("d" kill-this-buffer nil :exit t)
-  ("c" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
-
   ("1" winum-select-window-1 nil :exit t)
   ("2" winum-select-window-2 nil :exit t)
   ("3" winum-select-window-3 nil :exit t)
   ("4" winum-select-window-4 nil :exit t)
 
+  ("k" previous-buffer nil)
+  ("j" next-buffer nil)
+
+  ("s" save-buffer nil)
+  ("a" (lambda () (interactive) (save-some-buffers t)) nil :exit t)
+
+  ("b" helm-mini nil :exit t)
+  ("d" kill-this-buffer nil :exit t)
+  ("c" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
+
+  ("f" helm-find-files :exit t)
+
   ("q" nil "quit" :exit t :color pink))
 (defhydra hydra-elisp-g ()
   "
-GOTO
-_f_ my fns    _l_ line
-_h_ my hydras
+^Edit File^   ^Edit Pos^  ^Misc^
+_f_ my fns    _k_ prev    _l_ line
+_h_ my hydras _j_ next
+_i_ init
 "
   ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) nil :exit t)
   ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) nil :exit t)
+  ("i" (lambda () (interactive) (find-file (concat user-emacs-directory "/init.el"))) "init" :exit t)
+
+  ("k" goto-last-change nil)
+  ("j" goto-last-change-reverse nil)
 
   ("l" avy-goto-line nil :exit t)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-g ()
   "
-^CLOJ^           ^FILES^        ^MOTION^
-_r_ REPL         _f_ my fns     _l_ line
-_t_ test/impl    _h_ my hydras
-_p_ test report
+^Clojure^       ^Files^    ^Edit Pos^ ^Misc^
+_r_ REPL        _f_ fns    _k_ prev   _l_ line
+_t_ test/impl   _h_ hydras _j_ next
+_p_ test report _i_ init
 "
   ("r" cider-switch-to-repl-buffer nil :exit t)
   ("t" toggle-goto-test-impl nil :exit t)
   ("p" cider-test-show-report nil :exit t)
+
   ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) :exit t)
   ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) :exit t)
+  ("i" (lambda () (interactive) (find-file (concat user-emacs-directory "/init.el"))) "init" :exit t)
+
+  ("k" goto-last-change nil)
+  ("j" goto-last-change-reverse nil)
 
   ("l" avy-goto-line nil :exit t)
 
@@ -200,6 +205,14 @@ EDIT
   ("i" (lambda () (interactive) (find-file (concat user-emacs-directory "/init.el"))) "init" :exit t)
   ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) "functions" :exit t)
   ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) "hydras" :exit t))
+(defhydra hydra-any-spc-f ()
+  "
+come back here and maybe make it point to spc-b
+FILES/BUFFERS
+"
+  ("f"  "init" :exit t)
+  ("f"  "functions" :exit t)
+  ("h"  "hydras" :exit t))
 ;; ============= General: Key Defs  ==============
 (setq none-any-all ; prefix-key: none, state: any, keymap: all
       '("(" (lispy-parens-from-normal :wk "enter lispy, insert parens")
@@ -231,12 +244,12 @@ EDIT
 (setq spc-kz
       '("" nil
         "e" (hydra-any-spc-e/body :wk ">EDIT<")
-        "f" (:ignore t :wk "Files")
+        "f" (hydra-any-spc-f/body :wk "Files")
         "b" (hydra-all-spc-b/body :wk ">BUFFERS<")
         "g" (:ignore t :wk "Magit")
         "o" (:ignore t :wk "Fold")
         "p" (:ignore t :wk "Projects")
-        "s" (hydra-lisp-spc-s/body :wk "Search")
+        "s" (hydra-lisp-spc-s/body :wk "Search/Replace")
         "w" (:ignore t :wk "Window")
         "q" (:ignore t :wk "Quit")
 
