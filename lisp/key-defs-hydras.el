@@ -12,7 +12,7 @@ _]_ to open paren  _,_ pop back
   ("k" backward-parent-sexp nil)
   ("]" first-open-paren nil :exit t)
   
-  ("d" edebug-defun nil :exit t)
+  ("d" edebug-eval-top-level-form nil :exit t)
   ("e" eval-sexp-or-buffer nil :exit t)
   ("." lispy-goto-symbol "find definition" :exit t)
   ("," xref-pop-marker-stack "pop back" :exit t)
@@ -49,19 +49,6 @@ _]_ to open paren  ^^                _,_ pop back
   ("g" hydra-cloj-comma-g/body "+GO+" :exit t)
   
   ("q" nil "quit" :exit t))
-(defhydra hydra-repl-comma ()
-  ""
-  ("r" hydra-repl-comma-r/body "+REPL+" :exit t)
-  ("g" hydra-cloj-comma-g/body "+GO+" :exit t)
-  ("q" nil "quit" :exit t))
-(defhydra hydra-repl-comma-r ()
-  "
-_r_ goto cloj buffer
-_k_ kill
-"
-  ("r" cider-switch-to-last-clojure-buffer nil :exit t)
-  ("k" cider-quit nil :exit t)
-  ("q" nil "quit" :exit t))
 (defhydra hydra-cider-test-report-comma ()
   "
 ^TEST^               ^TEST MOVEMENT^
@@ -93,38 +80,44 @@ _r_ replace
   ("q" isearch-exit "Quit" :exit t))
 (defhydra hydra-all-spc-b ()
   "
- ^Goto^  ^^^       BUFFERS ^^^             ^FILES^
-^Window^ ^ Goto  ^ ^ Save  ^ ^ Misc  ^     ^Misc^ 
-^------^ ^-------^ ^-------^ ^-----------^ ^-----^
-  _1_    _k_ prev  _s_ this  _d_ kill-quit _f_ open
-  _2_    _j_ next  _a_ all   _b_ list 
-  _3_    ^ ^       ^ ^       _c_ kill-stay
-  _4_
++------ BUFFERS -----+  +---- WINDOWS ----+
+^ Goto  ^ ^ Save  ^ ^ Misc  ^ ^Resize^    ^Misc^      ^FILES^          ^FONT SIZE^
+^-------^ ^------^  ^------^  ^--------^  ^---------^ ^--------------^ ^----------^
+_k_ prev  _s_ this  _d_ kill  _l_ widen   _p_ swap    _f_ open         _U_ increase
+_j_ next  _a_ all   _b_ list  _h_ narrow  _r_ rotate  _w_ write        _u_ decrease
+^^        ^^        ^^        _i_ taller  _o_ other   _C-k_ quit emacs
 "
-  ("1" winum-select-window-1 nil :exit t)
-  ("2" winum-select-window-2 nil :exit t)
-  ("3" winum-select-window-3 nil :exit t)
-  ("4" winum-select-window-4 nil :exit t)
-
   ("k" previous-buffer nil)
   ("j" next-buffer nil)
+  ("o" other-window nil)
 
   ("s" save-buffer nil)
   ("a" (lambda () (interactive) (save-some-buffers t)) nil :exit t)
 
+  ("d" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
   ("b" helm-mini nil :exit t)
-  ("d" kill-this-buffer nil :exit t)
-  ("c" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
 
-  ("f" helm-find-files :exit t)
+  ("l" enlarge-window-horizontally nil)
+  ("h" shrink-window-horizontally nil)
+  ("i" enlarge-window nil)
+
+  ("p" swap-windows nil)
+  ("r" fenton/rotate-window-split nil)
+
+  ("f" helm-find-files nil :exit t)
+  ("w" write-file nil :exit t)
+  ("C-k" save-buffers-kill-terminal nil :exit t)
+
+  ("U" text-scale-increase nil)
+  ("u" text-scale-decrease nil)
 
   ("q" nil "quit" :exit t :color pink))
 (defhydra hydra-elisp-g ()
   "
-^Edit File^   ^Edit Pos^  ^Misc^
-_f_ my fns    _k_ prev    _l_ line
-_h_ my hydras _j_ next
-_i_ init
+^Edit File^   ^Edit Pos^  ^Goto^         ^Buffer^
+_f_ my fns    _k_ prev    _l_ line       _p_ prev
+_h_ my hydras _j_ next    _g_ first line _n_ next
+_i_ init      ^^          ^^             _x_ kill
 "
   ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) nil :exit t)
   ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) nil :exit t)
@@ -133,19 +126,26 @@ _i_ init
   ("k" goto-last-change nil)
   ("j" goto-last-change-reverse nil)
 
+  ("p" previous-buffer nil)
+  ("n" next-buffer nil)
+  ("x" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
+
+  ("g" evil-goto-first-line nil :exit t)
   ("l" avy-goto-line nil :exit t)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-g ()
   "
-^Clojure^       ^Files^    ^Edit Pos^ ^Misc^
+^Clojure^       ^Files^    ^Edit Pos^ ^Goto^
 _r_ REPL        _f_ fns    _k_ prev   _l_ line
-_t_ test/impl   _h_ hydras _j_ next
+_t_ test        _h_ hydras _j_ next   _g_ first line
 _p_ test report _i_ init
+_c_ cloj
 "
   ("r" cider-switch-to-repl-buffer nil :exit t)
   ("t" toggle-goto-test-impl nil :exit t)
   ("p" cider-test-show-report nil :exit t)
+  ("c" toggle-goto-test-impl nil :exit t)
 
   ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) :exit t)
   ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) :exit t)
@@ -154,9 +154,42 @@ _p_ test report _i_ init
   ("k" goto-last-change nil)
   ("j" goto-last-change-reverse nil)
 
+  ("g" evil-goto-first-line nil :exit t)
   ("l" avy-goto-line nil :exit t)
 
   ("q" nil "quit" :exit t))
+(defhydra hydra-repl-g ()
+  "
+_g_ prev cloj file 
+_r_ prev cloj file 
+"
+  ("g" cider-switch-to-last-clojure-buffer nil :exit t)
+  ("r" cider-switch-to-last-clojure-buffer nil :exit t))
+(defhydra hydra-org-comma ()
+  "
+_j_ next                 _w_ move tree up        _c_ cut
+_k_ prev                 _s_ move tree down      _p_ paste
+_h_ prev heading         _C-h_ promote subtree   _o_ cycle fOld all
+_l_ next visib heading   _C-l_ demote subtree    _x_ cycle fold this 
+"
+  ("j" org-forward-element nil)
+  ("k" org-backward-element nil)
+  ("l" org-next-visible-heading nil)
+  ("h" org-previous-visible-heading nil)
+
+  ("w" org-move-subtree-up nil)
+  ("s" org-move-subtree-down nil)
+  ("C-h" org-promote-subtree nil)
+  ("C-l" org-demote-subtree nil)
+
+  ("c" org-cut-subtree nil)
+  ("p" org-paste-subtree nil)
+  ("o" org-shifttab nil)
+  ("x" org-cycle nil)
+
+  ("q" nil "quit" :exit t))
+(defhydra hydra-repl-comma () ""
+  ("k" cider-quit "kill REPL" :exit t)) 
 (defhydra hydra-cloj-comma-r ()
   "
 ^REPL^         ^SEXP^  
@@ -226,6 +259,7 @@ FILES/BUFFERS
         "M-," (pop-tag-mark :wk "pop from symbol")
         "C-n" (evil-scroll-page-down :wk "down")
         "C-k" (lispy-kill-sentence :wk "kill sentence")
+        "C-y" (evil-paste-before :wk "paste")
         "C-p" (evil-scroll-page-up :wk "up")
         "q" (self-insert-command :wk "self insert")))
 (setq none-any-lisp none-shared-lisp)
@@ -243,15 +277,16 @@ FILES/BUFFERS
        none-shared-lisp))
 (setq spc-kz
       '("" nil
-        "e" (hydra-any-spc-e/body :wk ">EDIT<")
-        "f" (hydra-any-spc-f/body :wk "Files")
         "b" (hydra-all-spc-b/body :wk ">BUFFERS<")
+        "c" (:ignore t :wk "Command Log")
+        "e" (hydra-any-spc-e/body :wk ">EDIT<")
+        "f" (hydra-all-spc-b/body :wk ">BUFFERS<")
         "g" (:ignore t :wk "Magit")
         "o" (:ignore t :wk "Fold")
         "p" (:ignore t :wk "Projects")
+        "q" (:ignore t :wk "Quit")
         "s" (hydra-lisp-spc-s/body :wk "Search/Replace")
         "w" (:ignore t :wk "Window")
-        "q" (:ignore t :wk "Quit")
 
         "1" (winum-select-window-1 :wk "move window 1")
         "2" (winum-select-window-2 :wk "move window 2")
@@ -265,8 +300,11 @@ FILES/BUFFERS
         ;; "e" (eval-sexp-or-buffer :wk "elisp eval buffer")
 
 
-        "ff" (helm-find-files :wk "Find Files")
+        ;; "ff" (helm-find-files :wk "Find Files")
         ;; "fed" (ffs "/home/fenton/.emacs.d/init.el" :wk "open init.el")
+
+        "cc" (command-log-mode :wk "toggle command log mode")
+        "cl" (clm/open-command-log-buffer :wk "show command log")
 
         "gs" (magit-status :wk "magit status")
         "gb" (:ignore t :wk "Magit Blame")
@@ -292,7 +330,8 @@ FILES/BUFFERS
         "w-" (split-window-below-balance :wk "split horizontally")
         "w3" (split-window-below-balance :wk "split horizontally")
         "w=" (balance-windows :wk "balance windows")
-        "wt" (transpose-windows :wk "transpose windows")))
+        "ws" (swap-windows :wk "swap windows")
+        "wr" (fenton/rotate-window-split :wk "rotate window split")))
 (setq comma-cloj-common
       '("." (cider-find-var :wk "find var")
         "," (cider-pop-back :wk "popback from var")
@@ -316,8 +355,12 @@ FILES/BUFFERS
 ;;       '("j" cider-test-next-result nil)
 ;;       '("d" cider-test-jump :exit t))
 
-(fset 'gdk 'general-define-key)
+;; edebug-eval-defun <-- with prefix instrument
+;; edebug-step-mode,edebug-forward-sexp, edebug-step-in
+;; edebug-step-out, edebug-previous-result, edebug-trace-mode
+;; edebug-backtrace 
 
+(fset 'gdk 'general-define-key)
 ;; ==> None.....None/All
 (apply 'gdk :keymaps '(emacs-lisp-mode-map)
        (append '("" nil)
@@ -344,6 +387,10 @@ FILES/BUFFERS
                '("g" (hydra-elisp-g/body :wk ""))
                '("," (hydra-elisp-comma/body :wk "comma"))
                none-normal-lisp))
+(apply 'gdk :keymaps '(org-mode-map)
+       :states '(normal visual emacs)
+       (append '("" nil)
+               '("," (hydra-org-comma/body :wk "comma"))))
 (apply 'gdk :keymaps '(cider-test-report-mode-map)
  :states '(normal visual emacs)
  (append
@@ -354,17 +401,23 @@ FILES/BUFFERS
   none-normal-lisp
   '("q" nil
     "q" (cider-popup-buffer-quit-function :wk "quit"))))
-
 (apply 'gdk :keymaps '(cider-repl-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)
                '("C-k" nil) ;; cannot get "C-k" unbound :(
                '("," hydra-repl-comma/body :wk "comma"
+                 "g" (hydra-repl-g/body :wk "go")
                  "k" (cider-repl-backward-input :wk "Previous Command")
                  "j" (cider-repl-forward-input :wk "Next Command")
                  "i" (evil-lispy-state :wk "insert -> lispy state"))
                none-any-lisp))
+(apply 'gdk :keymaps '(edebug-mode-map)
+       :states '(normal visual emacs)
+       (append '("" nil
+                 "i" edebug-step-in :wk ""
+                 "o" edebug-step-out :wk ""
 
+                 )))
 ;; ==> SPC......Normal
 (apply 'gdk :prefix "SPC" ; :keymaps: None/All
        :states '(normal visual emacs motion)

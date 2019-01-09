@@ -52,6 +52,8 @@
 (use-package auto-complete)
 (use-package evil-surround :ensure t :config (global-evil-surround-mode 1))
 ;; (use-package cl)
+(use-package clj-refactor)
+(use-package command-log-mode)
 
 ;; ============= Simple Config ====================
 (evil-mode 1)
@@ -65,6 +67,7 @@
 (setq inhibit-startup-message t
       initial-scratch-message nil ; Don't insert instructions in the *scratch* buffer
       x-select-enable-clipboard t ; set cut/copy to go to system clipboard
+      backup-directory-alist '(("" . "~/.emacs.d/backup")) ; put all backups here
       scroll-step 1)              ; Scroll one line (not half a page) when moving past the bottom of the window
 (mouse-wheel-mode t)                    ; mouse scrolling
 (line-number-mode 1)                    ; Show line-number and column-number in the mode line
@@ -87,16 +90,16 @@
       cider-repl-pop-to-buffer-on-connect nil
       cider-eldoc-display-context-dependent-info t
       cider-overlays-use-font-lock t
-      cider-default-cljs-repl 'figwheel
+      ;; cider-default-cljs-repl 'figwheel-main
       eldoc-echo-area-use-multiline-p 'truncate-sym-name-if-fit
       cider-eldoc-display-context-dependent-info t
       cider-overlays-use-font-lock t
       cider-prompt-for-symbol nil
       cider-auto-select-test-report-buffer nil
+      cider-auto-test-mode 1
       cider-test-show-report-on-success nil
       cider-cljs-lein-repl "(do (use 'figwheel-sidecar.repl-api) (start-figwheel!) (cljs-repl))"
-      show-paren-delay 0) 
-;; (cider-auto-test-mode 1)
+      show-paren-delay 0)  
 (set-face-background 'show-paren-match "#640000")
 (delight '((helm-mode) (emacs-lisp-mode)))
 (eval-after-load "undo-tree" '(diminish 'undo-tree-mode))
@@ -116,12 +119,9 @@
       desktop-path                (list desktop-dirname)
       desktop-files-not-to-save   "^$" )
 (desktop-save-mode 1)
-
 ;; ========== function defs ==========
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (load "my-functions.el")
-
-;; ============= Hooks ==================
 
 ;; ============= HOOKS ==============================
 (add-hook 'prog-mode-hook
@@ -140,9 +140,11 @@
 (add-hook 'cider-mode-hook
           (lambda ()
             (highlight-parentheses-mode 1)
+            (clj-refactor-mode 1)
+            (yas-minor-mode 1)
             (company-mode)
             (cider-company-enable-fuzzy-completion)
-            (eldoc-mode)))
+            (eldoc-mode))) 
 
 ;; ========== key defs and hydras ==========
 (load "key-defs-hydras.el")
@@ -154,7 +156,12 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (evil-surround auto-complete cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move))))
+    (command-log-mode clj-refactor evil-surround auto-complete cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move)))
+ '(safe-local-variable-values
+   (quote
+    ((source-dir . "aoc2018_14")
+     (source-dir . "aoc2018_13")
+     (source-dir . aoc2018_13)))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

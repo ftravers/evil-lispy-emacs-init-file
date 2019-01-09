@@ -1,10 +1,34 @@
-
 ;; ============= Custom Functions ===================
 ;; (defun in-l()
 ;;   (interactive)
 ;;   (if (evil-lispy-state-p)
 ;;       (message "in lispy state")
 ;;     (message "NOT in lispy state")))
+(defun fenton/rotate-window-split ()
+  "if windows split vertically change to horizontally, and vice versa."
+  (interactive)
+  (if (= (count-windows) 2)
+      (let* ((this-win-buffer (window-buffer))
+             (next-win-buffer (window-buffer (next-window)))
+             (this-win-edges (window-edges (selected-window)))
+             (next-win-edges (window-edges (next-window)))
+             (this-win-2nd (not (and (<= (car this-win-edges)
+                                         (car next-win-edges))
+                                     (<= (cadr this-win-edges)
+                                         (cadr next-win-edges)))))
+             (splitter
+              (if (= (car this-win-edges)
+                     (car (window-edges (next-window))))
+                  'split-window-horizontally
+                'split-window-vertically)))
+        (delete-other-windows)
+        (let ((first-win (selected-window)))
+          (funcall splitter)
+          (if this-win-2nd (other-window 1))
+          (set-window-buffer (selected-window) this-win-buffer)
+          (set-window-buffer (next-window) next-win-buffer)
+          (select-window first-win)
+          (if this-win-2nd (other-window 1))))))
 (defun in-lispy ()
   (interactive)
   (if (evil-lispy-state-p)
@@ -32,8 +56,8 @@
   (interactive)
   (split-window-below)
   (balance-windows))
-(defun transpose-windows ()
-  "Transpose two windows.  If more or less than two windows are visible, error."
+(defun swap-windows ()
+  "swap two windows.  If more or less than two windows are visible, error."
   (interactive)
   (unless (= 2 (count-windows))
     (error "There are not 2 windows."))
@@ -210,7 +234,8 @@ that."
       ((no-dash-ns (replace-regexp-in-string "-" "_" (clojure-find-ns)))
        (no-dot-ns (replace-regexp-in-string (regexp-quote ".") "/" no-dash-ns))
        (file-extension (file-name-extension (buffer-file-name)))
-       (test-file (concat (projectile-project-root) "test/" no-dot-ns "_test." file-extension)))
+       (test-file
+        (concat (projectile-project-root) "test/" no-dot-ns "_test." file-extension)))
     (find-file test-file)))
 (defun open-impl-file ()
   "open the corresponding implementation file for this test file."
@@ -220,7 +245,8 @@ that."
        (no-dash-ns (replace-regexp-in-string "-" "_" no-test-ns))
        (no-dot-ns (replace-regexp-in-string (regexp-quote ".") "/" no-dash-ns))
        (file-extension (file-name-extension (buffer-file-name)))
-       (impl-file (concat (projectile-project-root) "src/" no-dot-ns "." file-extension)))
+       (impl-file
+        (concat (projectile-project-root) "src/" no-dot-ns "." file-extension)))
     (find-file impl-file)))
 (defun get-curr-function-name ()
   (save-excursion
@@ -257,7 +283,6 @@ number>-test"
     (string-prefix-p pref buf)))
 (defun set-plist! (plist key value)
   (setq plist (plist-put plist key value)))
-
 (defun project-relative-path ()
   (interactive)
   (let* ((plst '())
@@ -279,7 +304,6 @@ number>-test"
         (substring buf (length pr))
       nil)
     plst))
-
 (defun in-repl-p ()
   (let* ((buf-name (buffer-name)))
     (string-prefix-p "*cider-repl " buf-name)))
@@ -317,7 +341,6 @@ number>-test"
 (defun find-clojure-ns ()
   (interactive)
   (message "cloj ns: %s" (clojure-find-ns)))
-
 ;; when a cider file is loaded refresh ns
 ;; (defun my-reload-dependents ()
 ;;   (let* ((buf (get-buffer (cider-current-repl-buffer)))
