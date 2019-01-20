@@ -54,6 +54,10 @@
 ;; (use-package cl)
 (use-package clj-refactor)
 (use-package command-log-mode)
+(use-package htmlize)
+(use-package treemacs)
+(use-package treemacs-evil)
+(use-package treemacs-projectile)
 
 ;; ============= Simple Config ====================
 (evil-mode 1)
@@ -68,7 +72,7 @@
       initial-scratch-message nil ; Don't insert instructions in the *scratch* buffer
       x-select-enable-clipboard t ; set cut/copy to go to system clipboard
       backup-directory-alist '(("" . "~/.emacs.d/backup")) ; put all backups here
-      scroll-step 1)              ; Scroll one line (not half a page) when moving past the bottom of the window
+      scroll-step 1)     ; Scroll one line (not half a page) when moving past the bottom of the window
 (mouse-wheel-mode t)                    ; mouse scrolling
 (line-number-mode 1)                    ; Show line-number and column-number in the mode line
 (column-number-mode 1)                  ; Show line-number and column-number in the mode line
@@ -86,7 +90,7 @@
       projectile-completion-system 'helm
       projectile-switch-project-action 'helm-projectile
       cider-font-lock-dynamically '(macro core function var)
-      cider-pprint-fn "clojure.pprint/pprint"
+      ;; cider-pprint-fn "clojure.pprint/pprint"
       cider-repl-pop-to-buffer-on-connect nil
       cider-eldoc-display-context-dependent-info t
       cider-overlays-use-font-lock t
@@ -156,7 +160,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (command-log-mode clj-refactor evil-surround auto-complete cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move)))
+    (treemacs-projectile treemacs-evil htmlize command-log-mode clj-refactor evil-surround auto-complete cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move)))
  '(safe-local-variable-values
    (quote
     ((source-dir . "aoc2018_14")

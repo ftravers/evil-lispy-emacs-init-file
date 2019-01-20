@@ -10,3 +10,5 @@ recentf~
 semanticdb/
 /ac-comphist.dat
 backup/
+.cache/
+projectile.cache

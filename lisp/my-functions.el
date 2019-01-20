@@ -29,6 +29,16 @@
           (set-window-buffer (next-window) next-win-buffer)
           (select-window first-win)
           (if this-win-2nd (other-window 1))))))
+(defun g-in-lispy ()
+  (interactive)
+  (if (evil-lispy-state-p)
+      (hydra-lispy-g/body)
+    (self-insert-command)))
+(defun my-join-line ()
+  (interactive)
+  (delete-indentation)
+  (if (evil-lispy-state-p)
+      (first-open-paren)))
 (defun in-lispy ()
   (interactive)
   (if (evil-lispy-state-p)
@@ -119,8 +129,14 @@ function call."
   (cider-eval-print-last-sexp)
   (beginning-of-line)
   (insert ";; =>  "))
+
 ;; (clomacs-defun adder (+ 1 1))
 ;; (message (adder))
+
+;; emacs lisp:
+;; (clomacs-defun get-property System/getProperty)
+;; (message (get-property "java.version"))
+
 (defun lispy-right-p ()
   "Return t if after lispy-right character."
   (looking-back "[])}]"
@@ -209,7 +225,7 @@ that."
   (o-lispy))
 (defun first-open-paren ()
   (interactive)
-  (search-forward "(")
+  (re-search-forward "[\(\[{]")
   (backward-char)
   (call-interactively #'evil-lispy/enter-state-left))
 (defun repl-reload-ns ()
@@ -225,6 +241,13 @@ that."
   (interactive)
   (call-interactively #'cider-load-buffer)
   (call-interactively #'repl-reload-ns))
+(defun open-test-buffer-from-repl ()
+  (interactive)
+  (let* ((last-buffer (other-buffer (current-buffer) 1)))
+    (find-file-other-window
+     (if (in-test-file-p last-buffer)
+         (buffer-file-name last-buffer)
+       (get-impl-file last-buffer)))))
 ;; write a defun that opens the corresponding test file
 ;; clojure-find-ns -> reports the current clojure buffer ns
 (defun open-test-file ()
@@ -236,18 +259,22 @@ that."
        (file-extension (file-name-extension (buffer-file-name)))
        (test-file
         (concat (projectile-project-root) "test/" no-dot-ns "_test." file-extension)))
-    (find-file test-file)))
+    (find-file-other-window test-file)))
+(defun get-impl-file (test-buffer)
+  (interactive)
+  (with-current-buffer test-buffer
+    (let*
+        ((no-test-ns (replace-regexp-in-string "-test" "" (clojure-find-ns)))
+         (no-dash-ns (replace-regexp-in-string "-" "_" no-test-ns))
+         (no-dot-ns (replace-regexp-in-string (regexp-quote ".") "/" no-dash-ns))
+         (file-extension (file-name-extension (buffer-file-name)))
+         (impl-file
+          (concat (projectile-project-root) "src/" no-dot-ns "." file-extension)))
+      impl-file)))
 (defun open-impl-file ()
   "open the corresponding implementation file for this test file."
   (interactive)
-  (let*
-      ((no-test-ns (replace-regexp-in-string "-test" "" (clojure-find-ns)))
-       (no-dash-ns (replace-regexp-in-string "-" "_" no-test-ns))
-       (no-dot-ns (replace-regexp-in-string (regexp-quote ".") "/" no-dash-ns))
-       (file-extension (file-name-extension (buffer-file-name)))
-       (impl-file
-        (concat (projectile-project-root) "src/" no-dot-ns "." file-extension)))
-    (find-file impl-file)))
+  (find-file-other-window (get-impl-file (current-buffer))))
 (defun get-curr-function-name ()
   (save-excursion
     (goto-top-level-sexp)
@@ -276,11 +303,18 @@ number>-test"
     (open-impl-file)
     (goto-char (point-min))
     (search-forward (concat "defn " curr-fn-name-no-suffix))))
-(defun in-test-file-p ()
+(defun in-test-file-p (&optional buffer)
   "true/false predicate if in a test file."
   (let ((pref (concat (projectile-project-root) "test/"))
-        (buf (buffer-file-name)))
+        (buf (if buffer
+                 (buffer-file-name buffer)
+               (buffer-file-name))))
     (string-prefix-p pref buf)))
+(defun toggle-goto-test-impl ()
+  (interactive)
+  (if (in-test-file-p)
+      (go-to-impl-function)
+    (go-to-test-function)))
 (defun set-plist! (plist key value)
   (setq plist (plist-put plist key value)))
 (defun project-relative-path ()
@@ -320,11 +354,6 @@ number>-test"
     ('test-file (message "test file"))
     ('source-file (message "source file"))
     (otherwise (message "Unknown file type %S" otherwise))))
-(defun toggle-goto-test-impl ()
-  (interactive)
-  (if (in-test-file-p)
-      (go-to-impl-function)
-    (go-to-test-function)))
 (defun goto-last-clojure-file ()
   (interactive)
   (if (in-test-file-p)
@@ -360,3 +389,15 @@ number>-test"
     (with-current-buffer buf
       (when (and (buffer-file-name) (buffer-modified-p))
         (save-buffer)))))
+(defun rename-file-and-buffer ()
+  "Rename the current buffer and file it is visiting."
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (if (not (and filename (file-exists-p filename)))
+        (message "Buffer is not visiting a file!")
+      (let ((new-name (read-file-name "New name: " filename)))
+        (cond
+         ((vc-backend filename) (vc-rename-file filename new-name))
+         (t
+          (rename-file filename new-name t)
+          (set-visited-file-name new-name t t)))))))

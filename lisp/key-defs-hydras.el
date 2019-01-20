@@ -1,3 +1,4 @@
+;; todo: add a manual search/replace incase u want to replace more than a symbol. SPC s m
 ;; ============= HYDRAS ===============================
 (defhydra hydra-elisp-comma ()
   "
@@ -24,7 +25,7 @@ _]_ to open paren  _,_ pop back
   "
 ^SEXP MOVEMENT^    ^EVAL^            ^CIDER^            ^SEXP FORMAT^      
 _[_ to top level   _l_ load buffer   _'_ CLJ  JackIn    _o_ space around
-_j_ next           _e_ top lvl sexp  _\"_ CLJS JackIn
+_j_ next           _e_ top lvl sexp  _\"_ CLJS JackIn   _f_ clj refactor
 _k_ next           _d_ debug defn    _._ find defn
 _]_ to open paren  ^^                _,_ pop back
 "
@@ -36,6 +37,7 @@ _]_ to open paren  ^^                _,_ pop back
   ("l" load-buffer-set-ns nil :exit t)
   ("e" cider-eval-defun-at-point nil :exit t)
   ("d" cider-debug-defun-at-point nil :exit t)
+  ("f" hydra-cljr-help-menu/body nil :exit t)
   
   ("'" cider-jack-in nil :exit t)
   ("\"" cider-jack-in-cljs nil :exit t)
@@ -64,9 +66,9 @@ _d_ goto definition  _j_ next
   ("q" nil "quit" :exit t))
 (defhydra hydra-lisp-spc-s ()
   "
-^Symbol^    ^Misc^   
+^Symbol^    ^Manual^   
 _y_ search  _s_ search  
-_k_ up         
+_k_ up      _p_ replace   
 _j_ down      
 _r_ replace
 "
@@ -76,16 +78,17 @@ _r_ replace
   ("r" query-replace-symbol-at-point nil :exit t)
 
   ("s" isearch-forward nil :exit t)
+  ("p" query-replace nil :exit t)
 
   ("q" isearch-exit "Quit" :exit t))
 (defhydra hydra-all-spc-b ()
   "
-+------ BUFFERS -----+  +---- WINDOWS ----+
-^ Goto  ^ ^ Save  ^ ^ Misc  ^ ^Resize^    ^Misc^      ^FILES^          ^FONT SIZE^
-^-------^ ^------^  ^------^  ^--------^  ^---------^ ^--------------^ ^----------^
-_k_ prev  _s_ this  _d_ kill  _l_ widen   _p_ swap    _f_ open         _U_ increase
-_j_ next  _a_ all   _b_ list  _h_ narrow  _r_ rotate  _w_ write        _u_ decrease
-^^        ^^        ^^        _i_ taller  _o_ other   _C-k_ quit emacs
++------- BUFFERS -------+ +---- WINDOWS ----+
+^Goto   ^ ^Save   ^ ^Misc   ^   ^Resize^    ^Misc^      ^FILES^          ^FONT SIZE^
+^-------^ ^------^  ^---------^ ^--------^  ^---------^ ^--------------^ ^----------^
+_k_ prev  _s_ this  _d_ kill    _l_ widen   _p_ swap    _f_ open         _U_ increase
+_j_ next  _a_ all   _b_ list    _h_ narrow  _r_ rotate  _w_ write        _u_ decrease
+^^        ^^        _n_ rename  _i_ taller  _o_ other   _C-k_ quit emacs
 "
   ("k" previous-buffer nil)
   ("j" next-buffer nil)
@@ -96,6 +99,7 @@ _j_ next  _a_ all   _b_ list  _h_ narrow  _r_ rotate  _w_ write        _u_ decre
 
   ("d" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
   ("b" helm-mini nil :exit t)
+  ("n" rename-file-and-buffer nil :exit t)
 
   ("l" enlarge-window-horizontally nil)
   ("h" shrink-window-horizontally nil)
@@ -112,63 +116,81 @@ _j_ next  _a_ all   _b_ list  _h_ narrow  _r_ rotate  _w_ write        _u_ decre
   ("u" text-scale-decrease nil)
 
   ("q" nil "quit" :exit t :color pink))
-(defhydra hydra-elisp-g ()
+
+(defhydra hydra-g-n ()
   "
-^Edit File^   ^Edit Pos^  ^Goto^         ^Buffer^
-_f_ my fns    _k_ prev    _l_ line       _p_ prev
-_h_ my hydras _j_ next    _g_ first line _n_ next
-_i_ init      ^^          ^^             _x_ kill
+^Buffer^   ^Edit Pos^ ^Page^   
+_p_ prev   _k_ prev   _u_ up   
+_n_ next   _j_ next   _d_ down 
+_x_ close  
 "
-  ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) nil :exit t)
-  ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) nil :exit t)
-  ("i" (lambda () (interactive) (find-file (concat user-emacs-directory "/init.el"))) "init" :exit t)
-
-  ("k" goto-last-change nil)
-  ("j" goto-last-change-reverse nil)
-
   ("p" previous-buffer nil)
   ("n" next-buffer nil)
   ("x" (lambda () (interactive) (kill-this-buffer) (next-buffer)) nil)
 
-  ("g" evil-goto-first-line nil :exit t)
-  ("l" avy-goto-line nil :exit t)
+  ("k" goto-last-change nil)
+  ("j" goto-last-change-reverse nil)
+
+  ("u" evil-scroll-page-up nil)
+  ("d" evil-scroll-page-down nil)
+
+  ("q" nil "quit" :exit t))
+(defhydra hydra-g-j ()
+  "
+ ^Join^
+ _O_ line above
+ _o_ line below
+"
+  ("O" my-join-line nil)
+  ("o" evil-join nil)
+  ("q" nil "quit" :exit t))
+(defhydra hydra-any-g ()
+  "
+^File^          
+_f_ my fns      
+_h_ my hydras 
+_i_ init      
+"
+  ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) nil :exit t)
+  ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) nil :exit t)
+  ("i" (lambda () (interactive) (find-file (concat user-emacs-directory "/init.el"))) nil :exit t)
+
+  ("g" evil-goto-first-line "first line" :exit t)
+  ("l" avy-goto-line "goto line" :exit t)
+  ("t" (switch-to-buffer-other-window "*cider-test-report*") nil :exit t)
+  ("j" hydra-g-j/body ">Join<" :exit t)
+  ("e" hydra-g-n/body ">Edit Post<" :exit t)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-g ()
   "
-^Clojure^       ^Files^    ^Edit Pos^ ^Goto^
-_r_ REPL        _f_ fns    _k_ prev   _l_ line
-_t_ test        _h_ hydras _j_ next   _g_ first line
+^Clojure^       ^Files^    
+_r_ REPL        _f_ fns    
+_t_ test        _h_ hydras 
 _p_ test report _i_ init
 _c_ cloj
 "
   ("r" cider-switch-to-repl-buffer nil :exit t)
   ("t" toggle-goto-test-impl nil :exit t)
-  ("p" cider-test-show-report nil :exit t)
+  ("p" (switch-to-buffer-other-window "*cider-test-report*") nil :exit t)
   ("c" toggle-goto-test-impl nil :exit t)
 
-  ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) :exit t)
-  ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) :exit t)
-  ("i" (lambda () (interactive) (find-file (concat user-emacs-directory "/init.el"))) "init" :exit t)
+  ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) nil :exit t)
+  ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) nil :exit t)
+  ("i" (lambda () (interactive) (find-file (concat user-emacs-directory "/init.el"))) nil :exit t)
 
-  ("k" goto-last-change nil)
-  ("j" goto-last-change-reverse nil)
-
-  ("g" evil-goto-first-line nil :exit t)
-  ("l" avy-goto-line nil :exit t)
+  ("g" evil-goto-first-line "first line" :exit t)
+  ("l" avy-goto-line "goto line" :exit t)
+  ("j" hydra-g-j/body ">Join<" :exit t)
+  ("e" hydra-g-n/body ">Edit Pos<" :exit t)
 
   ("q" nil "quit" :exit t))
-(defhydra hydra-repl-g ()
-  "
-_g_ prev cloj file 
-_r_ prev cloj file 
-"
-  ("g" cider-switch-to-last-clojure-buffer nil :exit t)
-  ("r" cider-switch-to-last-clojure-buffer nil :exit t))
+(defhydra hydra-repl-g () ""
+  ("r" cider-switch-to-last-clojure-buffer "last cloj buf" :exit t))
 (defhydra hydra-org-comma ()
   "
-_j_ next                 _w_ move tree up        _c_ cut
-_k_ prev                 _s_ move tree down      _p_ paste
+_j_ next                 _w_ move tree up        _c_ cut              _u_ page up
+_k_ prev                 _s_ move tree down      _p_ paste            _d_ page down
 _h_ prev heading         _C-h_ promote subtree   _o_ cycle fOld all
 _l_ next visib heading   _C-l_ demote subtree    _x_ cycle fold this 
 "
@@ -187,19 +209,28 @@ _l_ next visib heading   _C-l_ demote subtree    _x_ cycle fold this
   ("o" org-shifttab nil)
   ("x" org-cycle nil)
 
+  ("d" evil-scroll-page-down nil)
+  ("u" evil-scroll-page-up nil)
+
   ("q" nil "quit" :exit t))
 (defhydra hydra-repl-comma () ""
-  ("k" cider-quit "kill REPL" :exit t)) 
+  ("k" cider-repl-backward-input "Previous Command")
+  ("j" cider-repl-forward-input "Next Command")
+  ("x" cider-quit "kill REPL" :exit t)
+  ("q" nil "quit" :exit t)
+  ("ESC" nil nil :exit t)) 
 (defhydra hydra-cloj-comma-r ()
   "
 ^REPL^         ^SEXP^  
-_r_ goto repl  _l_ insert last       
+_g_ goto repl  _l_ insert last       
 _n_ set ns     _p_ eval, print
 _k_ kill
+_r_ refresh
 "
-  ("r" cider-switch-to-repl-buffer nil :exit t)
+  ("g" cider-switch-to-repl-buffer nil :exit t)
   ("n" repl-reload-ns nil :exit t)
   ("k" cider-quit nil :exit t)
+  ("r" cider-ns-refresh :exit t)
 
   ("l" cider-insert-last-sexp-in-repl nil :exit t)
   ("p" eval-sexp-print-in-comment nil :exit t)
@@ -214,7 +245,7 @@ _r_ repl _c_ cloj _t_ test _p_ test report
   ("r" cider-switch-to-repl-buffer nil :exit t)
   ("c" cider-switch-to-last-clojure-buffer nil :exit t)
   ("t" toggle-goto-test-impl nil :exit t)
-  ("p" cider-test-show-report nil :exit t)
+  ("p" (switch-to-buffer-other-window "*cider-test-report*") nil :exit t)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-comma-t ()
@@ -222,13 +253,14 @@ _r_ repl _c_ cloj _t_ test _p_ test report
 ^GOTO^           ^TESTS^
 _t_ test/impl    _p_ run project
 _r_ test report  _n_ run ns
-
+^^               _o_ under pOint
 "
   ("t" toggle-goto-test-impl nil :exit t)
-  ("r" cider-test-show-report nil :exit t)
+  ("r" (switch-to-buffer-other-window "*cider-test-report*") nil :exit t)
 
   ("p" cider-test-run-project-tests nil :exit t)
   ("n" cider-test-run-ns-tests nil :exit t)
+  ("o" cider-test-run-test nil :exit t)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-any-spc-e ()
@@ -246,6 +278,11 @@ FILES/BUFFERS
   ("f"  "init" :exit t)
   ("f"  "functions" :exit t)
   ("h"  "hydras" :exit t))
+(defhydra hydra-spc-m () ""
+  ("r" kmacro-start-macro "record macro" :exit t)
+  ("s" kmacro-end-macro "stop record macro" :exit t)
+  ("p" kmacro-end-and-call-macro "rePlay macro")
+  ("q" nil "quit" :exit t))
 ;; ============= General: Key Defs  ==============
 (setq none-any-all ; prefix-key: none, state: any, keymap: all
       '("(" (lispy-parens-from-normal :wk "enter lispy, insert parens")
@@ -257,9 +294,9 @@ FILES/BUFFERS
         "C-u" (universal-argument :wk "universal argument")
         "M-." (lispy-goto-symbol :wk "goto symbol")
         "M-," (pop-tag-mark :wk "pop from symbol")
-        "C-n" (evil-scroll-page-down :wk "down")
         "C-k" (lispy-kill-sentence :wk "kill sentence")
         "C-y" (evil-paste-before :wk "paste")
+        "C-n" (evil-scroll-page-down :wk "down")
         "C-p" (evil-scroll-page-up :wk "up")
         "q" (self-insert-command :wk "self insert")))
 (setq none-any-lisp none-shared-lisp)
@@ -282,6 +319,7 @@ FILES/BUFFERS
         "e" (hydra-any-spc-e/body :wk ">EDIT<")
         "f" (hydra-all-spc-b/body :wk ">BUFFERS<")
         "g" (:ignore t :wk "Magit")
+        "m" (hydra-spc-m/body :wk "Macro")
         "o" (:ignore t :wk "Fold")
         "p" (:ignore t :wk "Projects")
         "q" (:ignore t :wk "Quit")
@@ -355,7 +393,7 @@ FILES/BUFFERS
 ;;       '("j" cider-test-next-result nil)
 ;;       '("d" cider-test-jump :exit t))
 
-;; edebug-eval-defun <-- with prefix instrument
+;; edebugEdit-eval-defun <-- with prefix instrument
 ;; edebug-step-mode,edebug-forward-sexp, edebug-step-in
 ;; edebug-step-out, edebug-previous-result, edebug-trace-mode
 ;; edebug-backtrace 
@@ -384,12 +422,13 @@ FILES/BUFFERS
 (apply 'gdk :keymaps '(emacs-lisp-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)
-               '("g" (hydra-elisp-g/body :wk ""))
+               '("g" (hydra-any-g/body :wk ""))
                '("," (hydra-elisp-comma/body :wk "comma"))
                none-normal-lisp))
 (apply 'gdk :keymaps '(org-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)
+               '("g" (hydra-any-g/body :wk ""))
                '("," (hydra-org-comma/body :wk "comma"))))
 (apply 'gdk :keymaps '(cider-test-report-mode-map)
  :states '(normal visual emacs)
@@ -407,8 +446,6 @@ FILES/BUFFERS
                '("C-k" nil) ;; cannot get "C-k" unbound :(
                '("," hydra-repl-comma/body :wk "comma"
                  "g" (hydra-repl-g/body :wk "go")
-                 "k" (cider-repl-backward-input :wk "Previous Command")
-                 "j" (cider-repl-forward-input :wk "Next Command")
                  "i" (evil-lispy-state :wk "insert -> lispy state"))
                none-any-lisp))
 (apply 'gdk :keymaps '(edebug-mode-map)
@@ -443,15 +480,16 @@ FILES/BUFFERS
      (my-remove-lispy-key (kbd "C-j"))
      (my-remove-lispy-key (kbd "d"))
      (my-remove-lispy-key (kbd "e"))
+     (my-remove-lispy-key (kbd "g"))
      (lispy-define-key lispy-mode-map (kbd "d") 'lispy-kill-at-point)
      (lispy-define-key lispy-mode-map (kbd "x") 'collapse-expand)
      (lispy-define-key lispy-mode-map (kbd "y") 'special-lispy-new-copy)
      (lispy-define-key lispy-mode-map (kbd "p") 'special-lispy-paste)
+     (lispy-define-key lispy-mode-map (kbd "g") 'g-in-lispy)
      (lispy-define-key lispy-mode-map (kbd "f") 'special-lispy-flow)
      (lispy-define-key lispy-mode-map (kbd "i") 'special-lispy-tab)
      (lispy-define-key lispy-mode-map (kbd ":") 'evil-ex)
-     (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex)
-     ))
+     (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex)))
 
 ;; ==> None.....Input
 ;; (apply 'gdk :keymaps '(cider-repl-mode-map)
