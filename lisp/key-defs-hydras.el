@@ -23,9 +23,9 @@ _]_ to open paren  _,_ pop back
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-comma ()
   "
-^SEXP MOVEMENT^    ^EVAL^            ^CIDER^            ^SEXP FORMAT^      
-_[_ to top level   _l_ load buffer   _'_ CLJ  JackIn    _o_ space around
-_j_ next           _e_ top lvl sexp  _\"_ CLJS JackIn   _f_ clj refactor
+^SEXP MOVEMENT^    ^EVAL^            ^CIDER^                ^SEXP FORMAT^      
+_[_ to top level   _l_ load buffer   _'_ CLJ  JackIn        _o_ space around
+_j_ next           _e_ top lvl sexp  _\"_ CLJ&CLJS JackIn   _f_ clj refactor
 _k_ next           _d_ debug defn    _._ find defn
 _]_ to open paren  ^^                _,_ pop back
 "
@@ -40,7 +40,7 @@ _]_ to open paren  ^^                _,_ pop back
   ("f" hydra-cljr-help-menu/body nil :exit t)
   
   ("'" cider-jack-in nil :exit t)
-  ("\"" cider-jack-in-cljs nil :exit t)
+  ("\"" cider-jack-in-clj&cljs nil :exit t)
   ("." cider-find-var "find definition" :exit t)
   ("," xref-pop-marker-stack "pop back" :exit t)
 
@@ -116,7 +116,6 @@ _j_ next  _a_ all   _b_ list    _h_ narrow  _r_ rotate  _w_ write        _u_ dec
   ("u" text-scale-decrease nil)
 
   ("q" nil "quit" :exit t :color pink))
-
 (defhydra hydra-g-n ()
   "
 ^Buffer^   ^Edit Pos^ ^Page^   
@@ -302,15 +301,14 @@ FILES/BUFFERS
 (setq none-any-lisp none-shared-lisp)
 (setq none-normal-lisp
       (append
-       '("i" (evil-lispy-state :wk "insert -> lispy state")
+       '("i" (i-lispy :wk "insert -> lispy state")
          ;; "I" (I-lispy :wk "insert line -> lispy state")
          "o" (o-lispy :wk "open below -> lispy state")
          "O" (O-lispy :wk "open above -> lispy state")
          "a" (a-lispy :wk "append -> lispy state")
          "A" (A-lispy :wk "append line -> lispy state")
          "[" (evil-lispy/enter-state-left :wk "enter lispy mode left")
-         "]" (evil-lispy/enter-state-right :wk "enter lispy mode right")
-         )
+         "]" (evil-lispy/enter-state-right :wk "enter lispy mode right"))
        none-shared-lisp))
 (setq spc-kz
       '("" nil
@@ -487,9 +485,9 @@ FILES/BUFFERS
      (lispy-define-key lispy-mode-map (kbd "p") 'special-lispy-paste)
      (lispy-define-key lispy-mode-map (kbd "g") 'g-in-lispy)
      (lispy-define-key lispy-mode-map (kbd "f") 'special-lispy-flow)
-     (lispy-define-key lispy-mode-map (kbd "i") 'special-lispy-tab)
+     (lispy-define-key lispy-mode-map (kbd "i") 'i-lispy)
      (lispy-define-key lispy-mode-map (kbd ":") 'evil-ex)
-     (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex)))
+     (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex))) 
 
 ;; ==> None.....Input
 ;; (apply 'gdk :keymaps '(cider-repl-mode-map)
