@@ -116,7 +116,10 @@ _j_ next  _a_ all   _b_ list    _h_ narrow  _r_ rotate  _w_ write        _u_ dec
   ("u" text-scale-decrease nil)
 
   ("q" nil "quit" :exit t :color pink))
-(defhydra hydra-g-n ()
+(defhydra hydra-g-n () ""
+    ("n" lispy-narrow "narrow" :exit t)
+    ("w" lispy-widen "widen" :exit t))
+(defhydra hydra-g-e ()
   "
 ^Buffer^   ^Edit Pos^ ^Page^   
 _p_ prev   _k_ prev   _u_ up   
@@ -143,6 +146,14 @@ _x_ close
   ("O" my-join-line nil)
   ("o" evil-join nil)
   ("q" nil "quit" :exit t))
+(defhydra hydra-lispy-g () ""
+  ("g" evil-goto-first-line "first line" :exit t)
+  ("l" avy-goto-line "goto line" :exit t)
+  ("t" (switch-to-buffer-other-window "*cider-test-report*") nil :exit t)
+  ("j" hydra-g-j/body ">Join<" :exit t)
+  ("e" hydra-g-e/body ">Edit Post<" :exit t)
+  ("n" hydra-g-n/body ">Narrow/Widen" :exit t)
+  ("q" nil "quit" :exit t))
 (defhydra hydra-any-g ()
   "
 ^File^          
@@ -158,7 +169,8 @@ _i_ init
   ("l" avy-goto-line "goto line" :exit t)
   ("t" (switch-to-buffer-other-window "*cider-test-report*") nil :exit t)
   ("j" hydra-g-j/body ">Join<" :exit t)
-  ("e" hydra-g-n/body ">Edit Post<" :exit t)
+  ("e" hydra-g-e/body ">Edit Post<" :exit t)
+  ("n" hydra-g-n/body ">Narrow/Widen" :exit t)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-g ()
@@ -181,7 +193,8 @@ _c_ cloj
   ("g" evil-goto-first-line "first line" :exit t)
   ("l" avy-goto-line "goto line" :exit t)
   ("j" hydra-g-j/body ">Join<" :exit t)
-  ("e" hydra-g-n/body ">Edit Pos<" :exit t)
+  ("e" hydra-g-e/body ">Edit Pos<" :exit t)
+  ("n" hydra-g-n/body ">Narrow/Widen" :exit t)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-repl-g () ""
@@ -472,7 +485,7 @@ FILES/BUFFERS
 (general-def org-src-mode-map "C-'" 'org-edit-src-abort)
 
 ;; =======================================================
-(eval-after-load "lispy"
+ (eval-after-load "lispy"
   `(progn
      (my-remove-lispy-key (kbd "C-,"))
      (my-remove-lispy-key (kbd "C-j"))
@@ -485,7 +498,7 @@ FILES/BUFFERS
      (lispy-define-key lispy-mode-map (kbd "p") 'special-lispy-paste)
      (lispy-define-key lispy-mode-map (kbd "g") 'g-in-lispy)
      (lispy-define-key lispy-mode-map (kbd "f") 'special-lispy-flow)
-     (lispy-define-key lispy-mode-map (kbd "i") 'i-lispy)
+     (lispy-define-key lispy-mode-map (kbd "i") 'special-lispy-tab)
      (lispy-define-key lispy-mode-map (kbd ":") 'evil-ex)
      (lispy-define-key lispy-mode-map (kbd "\"") 'evil-ex))) 
 
