@@ -25,7 +25,7 @@ _]_ to open paren  _,_ pop back
   "
 ^SEXP MOVEMENT^    ^EVAL^            ^CIDER^                ^SEXP FORMAT^      
 _[_ to top level   _l_ load buffer   _'_ CLJ  JackIn        _o_ space around
-_j_ next           _e_ top lvl sexp  _\"_ CLJ&CLJS JackIn   _f_ clj refactor
+_j_ next           _e_ top lvl sexp  _\"_ CLJS JackIn   _f_ clj refactor
 _k_ next           _d_ debug defn    _._ find defn
 _]_ to open paren  ^^                _,_ pop back
 "
@@ -40,7 +40,7 @@ _]_ to open paren  ^^                _,_ pop back
   ("f" hydra-cljr-help-menu/body nil :exit t)
   
   ("'" cider-jack-in nil :exit t)
-  ("\"" cider-jack-in-clj&cljs nil :exit t)
+  ("\"" cider-jack-in-cljs nil :exit t)
   ("." cider-find-var "find definition" :exit t)
   ("," xref-pop-marker-stack "pop back" :exit t)
 
