@@ -58,7 +58,7 @@
 (use-package treemacs)
 (use-package treemacs-evil)
 (use-package treemacs-projectile)
-
+;; ( use-package magit-gh-pulls)
 ;; ============= Simple Config ====================
 (evil-mode 1)
 (load-theme 'wombat t)                  ; color theme
@@ -77,7 +77,7 @@
 (line-number-mode 1)                    ; Show line-number and column-number in the mode line
 (column-number-mode 1)                  ; Show line-number and column-number in the mode line
 (fset 'yes-or-no-p 'y-or-n-p)           ; When emacs asks for "yes" or "no", let "y" or "n" sufficide
-(menu-bar-mode -1)
+(menu-bar-mode t)
 (tool-bar-mode -1)
 (toggle-scroll-bar -1)
 (highlight-parentheses-mode 1)
@@ -160,7 +160,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (treemacs-projectile treemacs-evil htmlize command-log-mode clj-refactor evil-surround auto-complete cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move)))
+    (magit-gh-pulls treemacs-projectile treemacs-evil htmlize command-log-mode clj-refactor evil-surround auto-complete cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move)))
  '(safe-local-variable-values
    (quote
     ((source-dir . "aoc2018_14")

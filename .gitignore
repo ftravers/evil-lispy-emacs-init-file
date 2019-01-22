@@ -12,3 +12,4 @@ semanticdb/
 backup/
 .cache/
 projectile.cache
+/var
