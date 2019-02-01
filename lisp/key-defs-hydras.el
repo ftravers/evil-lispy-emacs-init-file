@@ -1,10 +1,14 @@
 ;; todo: add a manual search/replace incase u want to replace more than a symbol. SPC s m
 ;; ============= HYDRAS ===============================
+(defhydra hydra-markdown-comma () ""
+  ("h" flymd-flyit "html preview" :exit t)
+
+  ("q" nil "quit" :exit t))
 (defhydra hydra-elisp-comma ()
   "
-^SEXP MOVEMENT^    ^^               ^^
-_[_ to top level   _d_ debug defun  _o_ insert space around   
-_j_ next           _e_ sexp/buffer 
+^SEXP MOVEMENT^    ^^                    ^^
+_[_ to top level   _d_ debug defun       _o_ insert space around   
+_j_ next           _e_ eval sexp/buffer  _t_ run regression unit tests
 _k_ prev           _._ find defn 
 _]_ to open paren  _,_ pop back
 "
@@ -19,6 +23,7 @@ _]_ to open paren  _,_ pop back
   ("," xref-pop-marker-stack "pop back" :exit t)
 
   ("o" insert-space-around-sexp nil)
+  ("t" (lambda () (interactive) (ert t)) nil :exit t)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-comma ()
@@ -146,40 +151,48 @@ _x_ close
   ("O" my-join-line nil)
   ("o" evil-join nil)
   ("q" nil "quit" :exit t))
-(defhydra hydra-lispy-g () ""
-  ("g" evil-goto-first-line "first line" :exit t)
-  ("l" avy-goto-line "goto line" :exit t)
-  ("t" (switch-to-buffer-other-window "*cider-test-report*") nil :exit t)
-  ("j" hydra-g-j/body ">Join<" :exit t)
-  ("e" hydra-g-e/body ">Edit Post<" :exit t)
-  ("n" hydra-g-n/body ">Narrow/Widen" :exit t)
-  ("q" nil "quit" :exit t))
+;; (defhydra hydra-lispy-g () ""
+;;   ("g" evil-goto-first-line "first line" :exit t)
+;;   ("l" avy-goto-line "goto line" :exit t)
+;;   ("t" (switch-to-buffer-other-window "*cider-test-report*") nil :exit t)
+;;   ("j" hydra-g-j/body ">Join<" :exit t)
+;;   ("e" hydra-g-e/body ">Edit Post<" :exit t)
+;;   ("n" hydra-g-n/body ">Narrow/Widen" :exit t)
+;;   ("q" nil "quit" :exit t))
+(defhydra hydra-g-m () ""
+  ("f" (lambda () (interactive) (find-file-other-window (concat user-emacs-directory "/lisp/my-functions.el"))) "funcs" :exit t)
+  ("h" (lambda () (interactive) (find-file-other-window (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) "hydras" :exit t)
+  ("i" (lambda () (interactive) (find-file-other-window (concat user-emacs-directory "/init.el"))) "init" :exit t)
+  ("t" (lambda () (interactive) (find-file-other-window (concat user-emacs-directory "/lisp/my-functions-tests.el"))) "tests" :exit t))
 (defhydra hydra-any-g ()
   "
-^File^          
-_f_ my fns      
-_h_ my hydras 
-_i_ init      
+^Workspace^
+_1_
+_2_
+_3_
+_s_ save workspc
 "
-  ("f" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/my-functions.el"))) nil :exit t)
-  ("h" (lambda () (interactive) (find-file (concat user-emacs-directory "/lisp/key-defs-hydras.el"))) nil :exit t)
-  ("i" (lambda () (interactive) (find-file (concat user-emacs-directory "/init.el"))) nil :exit t)
-
+  ("m" hydra-g-m/body ">My Files<" :exit t)
   ("g" evil-goto-first-line "first line" :exit t)
   ("l" avy-goto-line "goto line" :exit t)
   ("t" (switch-to-buffer-other-window "*cider-test-report*") nil :exit t)
   ("j" hydra-g-j/body ">Join<" :exit t)
   ("e" hydra-g-e/body ">Edit Post<" :exit t)
   ("n" hydra-g-n/body ">Narrow/Widen" :exit t)
+
+  ("s" window-configuration-to-register nil :exit t)
+  ("1" (lambda () (interactive (jump-to-register 49))) nil :exit t)
+  ("2" (lambda () (interactive (jump-to-register 50))) nil :exit t)
+  ("3" (lambda () (interactive (jump-to-register 51))) nil :exit t)
 
   ("q" nil "quit" :exit t))
 (defhydra hydra-cloj-g ()
   "
-^Clojure^       ^Files^    
-_r_ REPL        _f_ fns    
-_t_ test        _h_ hydras 
-_p_ test report _i_ init
-_c_ cloj
+^Clojure^       ^Files^     ^Workspace^
+_r_ REPL        _f_ fns     _1_ 
+_t_ test        _h_ hydra   _2_ 
+_p_ test report _i_ init    _3_
+_c_ cloj        ^^          _s_ save workspc
 "
   ("r" cider-switch-to-repl-buffer nil :exit t)
   ("t" toggle-goto-test-impl nil :exit t)
@@ -196,9 +209,27 @@ _c_ cloj
   ("e" hydra-g-e/body ">Edit Pos<" :exit t)
   ("n" hydra-g-n/body ">Narrow/Widen" :exit t)
 
+  ("s" window-configuration-to-register nil :exit t)
+  ("1" (lambda () (interactive (jump-to-register 49))) nil :exit t)
+  ("2" (lambda () (interactive (jump-to-register 50))) nil :exit t)
+  ("3" (lambda () (interactive (jump-to-register 51))) nil :exit t)
+
   ("q" nil "quit" :exit t))
-(defhydra hydra-repl-g () ""
-  ("r" cider-switch-to-last-clojure-buffer "last cloj buf" :exit t))
+(defhydra hydra-repl-g ()
+  "
+ ^Workspace^
+ _1_
+ _2_
+ _3_
+ _s_ save workspc
+"
+  ("s" window-configuration-to-register nil :exit t)
+  ("1" (lambda () (interactive (jump-to-register 49))) nil :exit t)
+  ("2" (lambda () (interactive (jump-to-register 50))) nil :exit t)
+  ("3" (lambda () (interactive (jump-to-register 51))) nil :exit t)
+  ("r" cider-switch-to-last-clojure-buffer "last cloj buf" :exit t)
+  ("q" nil "quit" :exit t)
+  )
 (defhydra hydra-org-comma ()
   "
 _j_ next                 _w_ move tree up        _c_ cut              _u_ page up
@@ -426,10 +457,16 @@ FILES/BUFFERS
        none-any-all)
 (apply 'gdk :keymaps '(clojure-mode-map)
        :states '(normal visual emacs)
+       (append '("" nil
+                 "g" (hydra-cloj-g/body :wk "")
+                 "K" (kill-line :wk "kill to end of line")
+                 "," (hydra-cloj-comma/body :wk "comma"))
+               none-normal-lisp))
+(apply 'gdk :keymaps '(markdown-mode-map)
+       :states '(normal visual emacs)
        (append '("" nil)
-               '("g" (hydra-cloj-g/body :wk ""))
-               '("," (hydra-cloj-comma/body :wk "comma"))
-               none-normal-lisp)) 
+               '("g" (hydra-any-g/body :wk ""))
+               '("," (hydra-markdown-comma/body :wk "comma")))) 
 (apply 'gdk :keymaps '(emacs-lisp-mode-map)
        :states '(normal visual emacs)
        (append '("" nil)

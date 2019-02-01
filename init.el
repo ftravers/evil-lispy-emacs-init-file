@@ -55,9 +55,15 @@
 (use-package clj-refactor)
 (use-package command-log-mode)
 (use-package htmlize)
-(use-package treemacs)
-(use-package treemacs-evil)
-(use-package treemacs-projectile)
+(use-package markdown-mode)
+(use-package flymd)
+(defun my-flymd-browser-function (url)
+   (let ((browse-url-browser-function 'browse-url-firefox))
+     (browse-url url)))
+(setq flymd-browser-open-function 'my-flymd-browser-function)
+;; (use-package treemacs)
+;; (use-package treemacs-evil)
+;; (use-package treemacs-projectile)
 ;; ( use-package magit-gh-pulls)
 ;; ============= Simple Config ====================
 (evil-mode 1)
@@ -77,7 +83,7 @@
 (line-number-mode 1)                    ; Show line-number and column-number in the mode line
 (column-number-mode 1)                  ; Show line-number and column-number in the mode line
 (fset 'yes-or-no-p 'y-or-n-p)           ; When emacs asks for "yes" or "no", let "y" or "n" sufficide
-(menu-bar-mode t)
+(menu-bar-mode -1)
 (tool-bar-mode -1)
 (toggle-scroll-bar -1)
 (highlight-parentheses-mode 1)
@@ -140,6 +146,9 @@
 (add-hook 'org-mode-hook
           (lambda ()
             (auto-fill-mode 1)))
+(add-hook 'markdown-mode-hook
+          (lambda ()
+            (auto-fill-mode 1)))
 (add-hook 'ielm-mode-hook 'ielm-auto-complete)
 (add-hook 'cider-mode-hook
           (lambda ()
@@ -160,7 +169,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (magit-gh-pulls treemacs-projectile treemacs-evil htmlize command-log-mode clj-refactor evil-surround auto-complete cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move)))
+    (flymd markdown-mode magit-gh-pulls treemacs-projectile treemacs-evil htmlize command-log-mode clj-refactor evil-surround auto-complete cider-eldoc sr-speedbar cider winum wk use-package magit lispy highlight-parentheses helm-projectile helm-ag evil el-get diminish delight company clojure-mode buffer-move)))
  '(safe-local-variable-values
    (quote
     ((source-dir . "aoc2018_14")
