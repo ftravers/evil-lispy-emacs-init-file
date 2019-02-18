@@ -109,9 +109,8 @@ function call."
   (call-interactively #'evil-lispy-state))
 (defun A-lispy ()
   (interactive)
-  (evil-lispy/enter-state-right)
-  (backward-char 1)  
-  (insert " "))
+  (evil-append-line 1)
+  (evil-lispy-state))
 (defun i-lispy ()
   (interactive)
   (let* ((char-at-point (char-after))
@@ -123,20 +122,31 @@ function call."
       (progn
         (if (and char-at-point (= char-at-point open-paren))
             (if (in-special-p)
-                (special-lispy-tab)
-              (progn
-                (forward-char)
-                (insert " ")
-                (backward-char))))
-        (if (and char-b4-point          ; checks that not a beginning of file
-                 (= char-b4-point close-paren))
-            (if (not (= char-at-point close-paren))
-                (progn
-                  (backward-char)
-                  (insert " ")
-                  (backward-char)
-                  (insert " "))))))
+                (special-lispy-tab)))))
     (if (not (in-special-p)) 
+        (evil-lispy-state))))
+(defun ctrl-i ()
+  (interactive)
+  (let* ((char-at-point (char-after))
+         (char-b4-point (char-before))
+         (close-paren 41)
+         (open-paren 40))
+    (if (region-active-p)
+        (lispy-tab)
+      (progn
+        (if (and char-at-point (= char-at-point open-paren))
+            ;; at an opening paren
+            (if (in-special-p)
+                (special-lispy-tab)))
+        (if (and char-b4-point
+                 ;; checks that not a beginning of file
+                 (= char-b4-point close-paren))
+            (progn
+              (backward-char)
+              (insert " ")
+              (backward-char)
+              (insert " ")))))
+    (if (not (in-special-p))
         (evil-lispy-state))))
 (defun I-lispy ()
   (interactive)

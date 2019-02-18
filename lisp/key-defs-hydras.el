@@ -120,6 +120,8 @@ _j_ next  _a_ all   _b_ list    _h_ narrow  _r_ rotate  _w_ write        _u_ dec
   ("U" text-scale-increase nil)
   ("u" text-scale-decrease nil)
 
+  ("N" display-line-numbers-mode "toggle Line Numbers")
+
   ("q" nil "quit" :exit t :color pink))
 (defhydra hydra-g-n () ""
     ("n" lispy-narrow "narrow" :exit t)
@@ -337,7 +339,7 @@ FILES/BUFFERS
         "C-u" (universal-argument :wk "universal argument")
         "M-." (lispy-goto-symbol :wk "goto symbol")
         "M-," (pop-tag-mark :wk "pop from symbol")
-        "C-k" (lispy-kill-sentence :wk "kill sentence")
+        "C-k" (lispy-kill :wk "kill sentence")
         "C-y" (evil-paste-before :wk "paste")
         "C-n" (evil-scroll-page-down :wk "down")
         "C-p" (evil-scroll-page-up :wk "up")
@@ -447,8 +449,8 @@ FILES/BUFFERS
                '("e" (e-lisp :wk "elisp eval"))
                none-any-lisp))
 (apply 'gdk :keymaps '(clojure-mode-map)
-       (append '("" nil)
-               '("e" (e-clojure :wk "cider eval"))
+       (append '("" nil
+                 "e" (e-clojure :wk "cider eval"))
                none-any-lisp))
 
 ;; ==> None.....Normal
@@ -460,6 +462,7 @@ FILES/BUFFERS
        (append '("" nil
                  "g" (hydra-cloj-g/body :wk "")
                  "K" (kill-line :wk "kill to end of line")
+                 "C-i" (ctrl-i :wk "ctrl i")
                  "," (hydra-cloj-comma/body :wk "comma"))
                none-normal-lisp))
 (apply 'gdk :keymaps '(markdown-mode-map)
