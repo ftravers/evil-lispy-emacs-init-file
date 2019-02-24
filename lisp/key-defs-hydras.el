@@ -332,6 +332,7 @@ FILES/BUFFERS
 (setq none-any-all ; prefix-key: none, state: any, keymap: all
       '("(" (lispy-parens-from-normal :wk "enter lispy, insert parens")
         "q" (cider-popup-buffer-quit-function :wk "quit")
+        "g" (hydra-any-g/body :wk "")
         "C-p" (helm-show-kill-ring :wk "show kill ring")
         "ESC" (keyboard-escape-quit :wk "quit")))
 (setq none-shared-lisp
@@ -366,7 +367,6 @@ FILES/BUFFERS
         "m" (hydra-spc-m/body :wk "Macro")
         "o" (:ignore t :wk "Fold")
         "p" (:ignore t :wk "Projects")
-        "q" (:ignore t :wk "Quit")
         "s" (hydra-lisp-spc-s/body :wk "Search/Replace")
         "w" (:ignore t :wk "Window")
 
@@ -400,8 +400,6 @@ FILES/BUFFERS
         "pp" (helm-projectile-switch-project :wk "switch to project")
         "pf" (helm-projectile-find-file :wk "find file")
         "ps" (helm-projectile-ag :wk "find git project file")
-
-        "qq" (save-buffers-kill-terminal :wk "Emacs Quit")
 
         "wd" (delete-window-balance :wk "delete window")
         "w0" (delete-window-balance :wk "delete window")
@@ -513,6 +511,7 @@ FILES/BUFFERS
 (apply 'gdk :prefix "SPC" ; obscure keymaps
        :keymaps
        '(magit-status-mode-map
+         magit-diff-mode-map
          magit-revision-mode-map
          ielm-map
          help-mode-map
